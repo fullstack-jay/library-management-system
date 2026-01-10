@@ -11,14 +11,17 @@ import { User, Mail, Phone, MapPin, Calendar, Camera } from 'lucide-react';
 import { api } from '@/lib/services';
 
 interface UpdateProfileRequest {
-  id?: string;
+  id: string;
   nama: string;
+  username: string;
   email: string;
+  password?: string;
+  status: string;
+  role: string;
   nim: string;
-  jurusan: string;
   notelepon?: string;
+  jurusan: string;
   alamat?: string;
-  tanggalBergabung?: string;
 }
 
 export default function UserProfilePage() {
@@ -30,25 +33,36 @@ export default function UserProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const [formData, setFormData] = useState<UpdateProfileRequest>({
+  const [formData, setFormData] = useState<UpdateProfileRequest & { password?: string }>({
+    id: '',
     nama: '',
+    username: '',
     email: '',
+    status: '',
+    role: '',
     nim: '',
-    jurusan: '',
     notelepon: '',
+    jurusan: '',
     alamat: '',
+    password: '',
   });
 
   const [profileData, setProfileData] = useState<
-    UpdateProfileRequest & { fotoProfile?: string }
+    UpdateProfileRequest & { fotoProfile?: string; tanggalBergabung?: string; password?: string }
   >({
+    id: '',
     nama: '',
+    username: '',
     email: '',
+    status: '',
+    role: '',
     nim: '',
-    jurusan: '',
     notelepon: '',
+    jurusan: '',
     alamat: '',
     fotoProfile: '',
+    tanggalBergabung: '',
+    password: '',
   });
 
   // Helper function untuk build full URL foto
@@ -88,51 +102,73 @@ export default function UserProfilePage() {
 
         // Extract data from response
         const userData = profileResponse.data || profileResponse;
+        console.log('User profile response:', userData);
 
         const finalFotoUrl =
           userData.fotoUrl || userData.fotoProfile || userData.foto || '';
 
+        // ID directly from /user/profile/me response
         setProfileData({
-          id: userData.id || userData.userId || '',
+          id: userData.id || '',
           nama: userData.nama || '',
+          username: userData.username || '',
           email: userData.email || '',
+          status: userData.status || '',
+          role: userData.role || '',
           nim: userData.nim || '',
           jurusan: userData.jurusan || '',
           notelepon: userData.notelepon || userData.noHp || '',
           alamat: userData.alamat || '',
           fotoProfile: finalFotoUrl,
           tanggalBergabung: userData.tanggalBergabung || userData.createdAt || '',
+          password: userData.password || '',
         });
 
         setFormData({
+          id: userData.id || '',
           nama: userData.nama || '',
+          username: userData.username || '',
           email: userData.email || '',
+          status: userData.status || '',
+          role: userData.role || '',
           nim: userData.nim || '',
           jurusan: userData.jurusan || '',
           notelepon: userData.notelepon || userData.noHp || '',
           alamat: userData.alamat || '',
-          tanggalBergabung: userData.tanggalBergabung || userData.createdAt || '',
+          password: userData.password || '',
         });
       } catch (error: any) {
+        console.error('Error fetching user profile:', error);
         // Fallback ke data dari auth context
         if (user) {
           setProfileData({
+            id: user.id?.toString() || '',
             nama: user.nama || '',
+            username: user.username || '',
             email: user.email || '',
+            status: user.status || '',
+            role: user.role || '',
             nim: user.nim || '',
             jurusan: user.jurusan || '',
             notelepon: user.notelepon || '',
             alamat: user.alamat || '',
             fotoProfile: '',
+            tanggalBergabung: user.tanggalBergabung || user.createdAt || '',
+            password: user.password || '',
           });
 
           setFormData({
+            id: user.id?.toString() || '',
             nama: user.nama || '',
+            username: user.username || '',
             email: user.email || '',
+            status: user.status || '',
+            role: user.role || '',
             nim: user.nim || '',
             jurusan: user.jurusan || '',
             notelepon: user.notelepon || '',
             alamat: user.alamat || '',
+            password: user.password || '',
           });
         }
       } finally {
@@ -141,7 +177,7 @@ export default function UserProfilePage() {
     };
 
     fetchProfile();
-  }, [token]);
+  }, [token, user]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -223,10 +259,47 @@ export default function UserProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate that id is not empty
+    if (!profileData.id || profileData.id.trim() === '') {
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        text: 'ID profil tidak valid. Silakan refresh halaman dan coba lagi.',
+        confirmButtonColor: '#ef4444',
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      await api.updateUserProfile(formData);
+      console.log('Updating user profile with data:', {
+        id: profileData.id,
+        nama: formData.nama,
+        username: profileData.username,
+        email: formData.email,
+        password: formData.password || profileData.password,
+        status: profileData.status,
+        role: profileData.role,
+        nim: formData.nim,
+        notelepon: formData.notelepon,
+        jurusan: formData.jurusan,
+        alamat: formData.alamat,
+      });
+      await api.updateUserProfile({
+        id: profileData.id,
+        nama: formData.nama,
+        username: profileData.username,
+        email: formData.email,
+        password: formData.password || profileData.password,
+        status: profileData.status,
+        role: profileData.role,
+        nim: formData.nim,
+        notelepon: formData.notelepon,
+        jurusan: formData.jurusan,
+        alamat: formData.alamat,
+      });
 
       Swal.fire({
         icon: 'success',
@@ -245,24 +318,34 @@ export default function UserProfilePage() {
         const userData = updatedProfile.data || updatedProfile;
 
         setProfileData({
-          id: userData.id || userData.userId || '',
+          id: userData.id || '',
           nama: userData.nama || '',
+          username: userData.username || '',
           email: userData.email || '',
+          status: userData.status || '',
+          role: userData.role || '',
           nim: userData.nim || '',
           jurusan: userData.jurusan || '',
           notelepon: userData.notelepon || userData.noHp || '',
           alamat: userData.alamat || '',
           fotoProfile:
             userData.fotoUrl || userData.fotoProfile || userData.foto || '',
+          tanggalBergabung: userData.tanggalBergabung || userData.createdAt || '',
+          password: userData.password || profileData.password || '',
         });
 
         setFormData({
+          id: userData.id || '',
           nama: userData.nama || '',
+          username: userData.username || '',
           email: userData.email || '',
+          status: userData.status || '',
+          role: userData.role || '',
           nim: userData.nim || '',
           jurusan: userData.jurusan || '',
           notelepon: userData.notelepon || userData.noHp || '',
           alamat: userData.alamat || '',
+          password: userData.password || formData.password || '',
         });
       } catch (error) {
         // Error refreshing profile
@@ -287,12 +370,17 @@ export default function UserProfilePage() {
 
   const handleCancel = () => {
     setFormData({
+      id: profileData.id,
       nama: profileData.nama,
+      username: profileData.username,
       email: profileData.email,
+      status: profileData.status,
+      role: profileData.role,
       nim: profileData.nim,
-      jurusan: profileData.jurusan,
       notelepon: profileData.notelepon || '',
+      jurusan: profileData.jurusan,
       alamat: profileData.alamat || '',
+      password: profileData.password || '',
     });
     setIsEditing(false);
   };
@@ -482,6 +570,28 @@ export default function UserProfilePage() {
                   />
                 </div>
               </div>
+
+              {isEditing && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={formData.password}
+                    disabled={!isEditing}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    placeholder="Masukkan password Anda untuk menyimpan perubahan"
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Password diperlukan untuk menyimpan perubahan profil
+                  </p>
+                </div>
+              )}
             </div>
 
             {isEditing ? (
@@ -500,7 +610,13 @@ export default function UserProfilePage() {
               </div>
             ) : (
               <div className="flex justify-end pt-4">
-                <Button type="button" onClick={() => setIsEditing(true)}>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setIsEditing(true);
+                    setFormData({ ...formData, password: '' });
+                  }}
+                >
                   Edit Profile
                 </Button>
               </div>

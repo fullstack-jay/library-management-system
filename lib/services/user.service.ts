@@ -19,10 +19,10 @@ export const userService = {
 
   /**
    * Update user profile
-   * PUT /api/user/profile
+   * POST /api/user/edit
    */
   async updateUserProfile(data: any): Promise<any> {
-    const response = await apiClient.post('/user/profile/update', data);
+    const response = await apiClient.post('/user/edit', data);
     return response.data;
   },
 

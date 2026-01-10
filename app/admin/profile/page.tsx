@@ -92,20 +92,23 @@ export default function AdminProfilePage() {
         setIsFetchingProfile(true);
 
         const profileData = await api.getAdminProfile();
+        console.log('Backend profile response:', profileData);
 
         const finalFotoUrl = profileData.fotoUrl || profileData.fotoProfile || profileData.foto || '';
 
+        // ID directly from /admin/profile/me response
         setProfileData({
-          id: profileData.id || profileData.userId || '',
+          id: profileData.id || '',
           nama: profileData.nama || profileData.username || '',
           email: profileData.email || '',
           fotoProfile: finalFotoUrl, // Simpan path relatif
         });
       } catch (error: any) {
+        console.error('Error fetching profile:', error);
         // Fallback ke data dari auth context
         if (user) {
           setProfileData({
-            id: user.id || '',
+            id: user.id?.toString() || '',
             nama: user.nama || user.username || '',
             email: user.email || '',
             fotoProfile: user.fotoProfile || '',
@@ -117,7 +120,7 @@ export default function AdminProfilePage() {
     };
 
     fetchProfile();
-  }, [token]);
+  }, [token, user]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -168,7 +171,7 @@ export default function AdminProfilePage() {
       // Refresh profile data dari backend untuk mendapatkan data terbaru
       const updatedProfile = await api.getAdminProfile();
       setProfileData({
-        id: updatedProfile.id || updatedProfile.userId || '',
+        id: updatedProfile.id || '',
         nama: updatedProfile.nama || updatedProfile.username || '',
         email: updatedProfile.email || '',
         fotoProfile: updatedProfile.fotoUrl || updatedProfile.fotoProfile || updatedProfile.foto || photoUrl,
@@ -197,9 +200,22 @@ export default function AdminProfilePage() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate that id is not empty
+    if (!profileData.id || profileData.id.trim() === '') {
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        text: 'ID profil tidak valid. Silakan refresh halaman dan coba lagi.',
+        confirmButtonColor: '#ef4444',
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      console.log('Updating profile with data:', profileData);
       await api.updateAdminProfile(profileData);
 
       Swal.fire({
@@ -217,7 +233,7 @@ export default function AdminProfilePage() {
       try {
         const updatedProfile = await api.getAdminProfile();
         setProfileData({
-          id: updatedProfile.id || updatedProfile.userId || '',
+          id: updatedProfile.id || '',
           nama: updatedProfile.nama || updatedProfile.username || '',
           email: updatedProfile.email || '',
           fotoProfile: updatedProfile.fotoUrl || updatedProfile.fotoProfile || updatedProfile.foto || '',

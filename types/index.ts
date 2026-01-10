@@ -1,9 +1,11 @@
 // User Types
 export interface User {
-  id: number;
+  id: number | string;
   username: string;
   email: string;
-  role: 'ADMIN' | 'USER';
+  password?: string;
+  role: 'ADMIN' | 'USER' | 'ANGGOTA';
+  status?: string;
   nama?: string;
   nim?: string;
   jurusan?: string;
