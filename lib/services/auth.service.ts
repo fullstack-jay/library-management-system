@@ -82,12 +82,12 @@ export const authService = {
 
   /**
    * Register new user (Mahasiswa)
-   * POST /api/auth/register
+   * POST /api/auth/pendaftaran
    */
   async register(data: RegisterRequest): Promise<void> {
     try {
       const response = await apiClient.post<ApiResponse<void>>(
-        '/auth/register',
+        '/auth/pendaftaran',
         data
       );
 
@@ -97,7 +97,6 @@ export const authService = {
         throw new Error(response.data.message || 'Registration failed');
       }
     } catch (error: any) {
-
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       }

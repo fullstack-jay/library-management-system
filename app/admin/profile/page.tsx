@@ -1,13 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Swal from 'sweetalert2';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Modal } from '@/components/Modal';
-import { User, Mail, Shield, Calendar, Edit, Key, Camera, Upload } from 'lucide-react';
+import {
+  User,
+  Mail,
+  Shield,
+  Calendar,
+  Edit,
+  Key,
+  Camera,
+  Upload,
+} from 'lucide-react';
 import { api } from '@/lib/api';
 
 interface UpdateProfileRequest {
@@ -25,7 +34,7 @@ interface ChangePasswordRequest {
 
 export default function AdminProfilePage() {
   const { user, token } = useAuth();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +54,8 @@ export default function AdminProfilePage() {
     }
 
     // Build base URL
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
     const baseUrl = apiUrl.replace('/api', ''); // → http://localhost:8080
 
     // Jika path sudah mengandung /uploads/, gunakan langsung dengan baseUrl
@@ -94,9 +104,13 @@ export default function AdminProfilePage() {
         const profileData = await api.getAdminProfile();
         console.log('Backend profile response:', profileData);
 
-        const finalFotoUrl = profileData.fotoUrl || profileData.fotoProfile || profileData.foto || '';
+        const finalFotoUrl =
+          profileData.fotoUrl ||
+          profileData.fotoProfile ||
+          profileData.foto ||
+          '';
 
-        // ID directly from /admin/profile/me response
+        // ID directly from /admin/profile response
         setProfileData({
           id: profileData.id || '',
           nama: profileData.nama || profileData.username || '',
@@ -174,7 +188,11 @@ export default function AdminProfilePage() {
         id: updatedProfile.id || '',
         nama: updatedProfile.nama || updatedProfile.username || '',
         email: updatedProfile.email || '',
-        fotoProfile: updatedProfile.fotoUrl || updatedProfile.fotoProfile || updatedProfile.foto || photoUrl,
+        fotoProfile:
+          updatedProfile.fotoUrl ||
+          updatedProfile.fotoProfile ||
+          updatedProfile.foto ||
+          photoUrl,
       });
     } catch (error: any) {
       const errorMsg =
@@ -215,8 +233,14 @@ export default function AdminProfilePage() {
     setIsLoading(true);
 
     try {
-      console.log('Updating profile with data:', profileData);
-      await api.updateAdminProfile(profileData);
+      // Only send the fields that the backend accepts (id, nama, email)
+      const updateData = {
+        id: profileData.id,
+        nama: profileData.nama,
+        email: profileData.email,
+      };
+      console.log('Updating profile with data:', updateData);
+      await api.updateAdminProfile(updateData);
 
       Swal.fire({
         icon: 'success',
@@ -236,7 +260,11 @@ export default function AdminProfilePage() {
           id: updatedProfile.id || '',
           nama: updatedProfile.nama || updatedProfile.username || '',
           email: updatedProfile.email || '',
-          fotoProfile: updatedProfile.fotoUrl || updatedProfile.fotoProfile || updatedProfile.foto || '',
+          fotoProfile:
+            updatedProfile.fotoUrl ||
+            updatedProfile.fotoProfile ||
+            updatedProfile.foto ||
+            '',
         });
       } catch (error) {
         // Fallback: reload page
@@ -335,257 +363,268 @@ export default function AdminProfilePage() {
         </Card>
       ) : (
         <>
-      {/* Profile Information Card */}
-      <Card title="Informasi Profile">
-        <div className="space-y-6">
-          {/* Avatar Section */}
-          <div className="flex items-center space-x-6 pb-6 border-b">
-            <div className="relative">
-              {isPhotoValid(profileData?.fotoProfile) ? (
-                <>
-                  <img
-                    src={getFullPhotoUrl(profileData.fotoProfile!)}
-                    alt="Profile"
-                    className="w-24 h-24 rounded-full object-cover border-4 border-blue-500"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                      // Tampilkan fallback avatar
-                      const fallback = (e.target as HTMLImageElement).nextElementSibling;
-                      if (fallback) {
-                        (fallback as HTMLElement).style.display = 'flex';
-                      }
-                    }}
+          {/* Profile Information Card */}
+          <Card title="Informasi Profile">
+            <div className="space-y-6">
+              {/* Avatar Section */}
+              <div className="flex items-center space-x-6 pb-6 border-b">
+                <div className="relative">
+                  {isPhotoValid(profileData?.fotoProfile) ? (
+                    <>
+                      <img
+                        src={getFullPhotoUrl(profileData.fotoProfile!)}
+                        alt="Profile"
+                        className="w-24 h-24 rounded-full object-cover border-4 border-blue-500"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          // Tampilkan fallback avatar
+                          const fallback = (e.target as HTMLImageElement)
+                            .nextElementSibling;
+                          if (fallback) {
+                            (fallback as HTMLElement).style.display = 'flex';
+                          }
+                        }}
+                      />
+                      {/* Fallback avatar (hidden by default) */}
+                      <div
+                        className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold"
+                        style={{ display: 'none' }}
+                      >
+                        {profileData?.nama?.charAt(0).toUpperCase() ||
+                          user?.username?.charAt(0).toUpperCase() ||
+                          'A'}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                      {profileData?.nama?.charAt(0).toUpperCase() ||
+                        user?.username?.charAt(0).toUpperCase() ||
+                        'A'}
+                    </div>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
                   />
-                  {/* Fallback avatar (hidden by default) */}
-                  <div
-                    className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold"
-                    style={{ display: 'none' }}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingPhoto}
+                    className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Upload Foto"
                   >
-                    {profileData?.nama?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase() || 'A'}
-                  </div>
-                </>
-              ) : (
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                  {profileData?.nama?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase() || 'A'}
+                    {isUploadingPhoto ? (
+                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Camera size={16} />
+                    )}
+                  </button>
                 </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoUpload}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploadingPhoto}
-                className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Upload Foto"
-              >
-                {isUploadingPhoto ? (
-                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Camera size={16} />
-                )}
-              </button>
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900">
-                {profileData?.nama || user?.username}
-              </h3>
-              <p className="text-gray-600 mt-1">@{user?.username}</p>
-              <div className="mt-2">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                  <Shield size={14} className="mr-1" />
-                  {user?.role}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Profile Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex items-start space-x-3">
-              <User className="h-5 w-5 text-gray-400 mt-1" />
-              <div>
-                <p className="text-sm font-medium text-gray-500">Nama Lengkap</p>
-                <p className="text-gray-900 font-semibold mt-1">
-                  {profileData?.nama || '-'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <Mail className="h-5 w-5 text-gray-400 mt-1" />
-              <div>
-                <p className="text-sm font-medium text-gray-500">Email</p>
-                <p className="text-gray-900 font-semibold mt-1">{profileData?.email || user?.email}</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <Shield className="h-5 w-5 text-gray-400 mt-1" />
-              <div>
-                <p className="text-sm font-medium text-gray-500">Role</p>
-                <p className="text-gray-900 font-semibold mt-1">{user?.role}</p>
-              </div>
-            </div>
-
-            {user?.createdAt && (
-              <div className="flex items-start space-x-3">
-                <Calendar className="h-5 w-5 text-gray-400 mt-1" />
                 <div>
-                  <p className="text-sm font-medium text-gray-500">
-                    Bergabung Sejak
-                  </p>
-                  <p className="text-gray-900 font-semibold mt-1">
-                    {new Date(user.createdAt).toLocaleDateString('id-ID', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {profileData?.nama || user?.username}
+                  </h3>
+                  <p className="text-gray-600 mt-1">@{user?.username}</p>
+                  <div className="mt-2">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                      <Shield size={14} className="mr-1" />
+                      {user?.role}
+                    </span>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4 border-t">
-            <Button
-              onClick={() => setIsEditModalOpen(true)}
-              className="flex-1 md:flex-none"
-            >
-              <Edit size={18} className="mr-2" />
-              Edit Profile
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsPasswordModalOpen(true)}
-              className="flex-1 md:flex-none"
-            >
-              <Key size={18} className="mr-2" />
-              Ganti Password
-            </Button>
-          </div>
-        </div>
-      </Card>
+              {/* Profile Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex items-start space-x-3">
+                  <User className="h-5 w-5 text-gray-400 mt-1" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">
+                      Nama Lengkap
+                    </p>
+                    <p className="text-gray-900 font-semibold mt-1">
+                      {profileData?.nama || '-'}
+                    </p>
+                  </div>
+                </div>
 
-      {/* Edit Profile Modal */}
-      <Modal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        title="Edit Profile"
-      >
-        <form onSubmit={handleUpdateProfile} className="space-y-4">
-          <div>
-            <Input
-              label="Nama Lengkap"
-              value={profileData.nama}
-              onChange={(e) =>
-                setProfileData({ ...profileData, nama: e.target.value })
-              }
-              required
-              placeholder="Masukkan nama lengkap"
-            />
-          </div>
-          <div>
-            <Input
-              label="Email"
-              type="email"
-              value={profileData.email}
-              onChange={(e) =>
-                setProfileData({ ...profileData, email: e.target.value })
-              }
-              required
-              placeholder="Masukkan email"
-            />
-          </div>
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => setIsEditModalOpen(false)}
-            >
-              Batal
-            </Button>
-            <Button type="submit" className="flex-1" disabled={isLoading}>
-              {isLoading ? 'Menyimpan...' : 'Simpan'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+                <div className="flex items-start space-x-3">
+                  <Mail className="h-5 w-5 text-gray-400 mt-1" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Email</p>
+                    <p className="text-gray-900 font-semibold mt-1">
+                      {profileData?.email || user?.email}
+                    </p>
+                  </div>
+                </div>
 
-      {/* Change Password Modal */}
-      <Modal
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
-        title="Ganti Password"
-      >
-        <form onSubmit={handleChangePassword} className="space-y-4">
-          <div>
-            <Input
-              label="Password Lama"
-              type="password"
-              value={passwordData.oldPassword}
-              onChange={(e) =>
-                setPasswordData({
-                  ...passwordData,
-                  oldPassword: e.target.value,
-                })
-              }
-              required
-              placeholder="Masukkan password lama"
-            />
-          </div>
-          <div>
-            <Input
-              label="Password Baru"
-              type="password"
-              value={passwordData.newPassword}
-              onChange={(e) =>
-                setPasswordData({
-                  ...passwordData,
-                  newPassword: e.target.value,
-                })
-              }
-              required
-              placeholder="Masukkan password baru"
-            />
-          </div>
-          <div>
-            <Input
-              label="Konfirmasi Password Baru"
-              type="password"
-              value={passwordData.confirmPassword}
-              onChange={(e) =>
-                setPasswordData({
-                  ...passwordData,
-                  confirmPassword: e.target.value,
-                })
-              }
-              required
-              placeholder="Masukkan kembali password baru"
-            />
-          </div>
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => setIsPasswordModalOpen(false)}
-            >
-              Batal
-            </Button>
-            <Button type="submit" className="flex-1" disabled={isLoading}>
-              {isLoading ? 'Memproses...' : 'Ganti Password'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-    </>
+                <div className="flex items-start space-x-3">
+                  <Shield className="h-5 w-5 text-gray-400 mt-1" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Role</p>
+                    <p className="text-gray-900 font-semibold mt-1">
+                      {user?.role}
+                    </p>
+                  </div>
+                </div>
+
+                {user?.createdAt && (
+                  <div className="flex items-start space-x-3">
+                    <Calendar className="h-5 w-5 text-gray-400 mt-1" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">
+                        Bergabung Sejak
+                      </p>
+                      <p className="text-gray-900 font-semibold mt-1">
+                        {new Date(user.createdAt).toLocaleDateString('id-ID', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4 border-t">
+                <Button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="flex-1 md:flex-none"
+                >
+                  <Edit size={18} className="mr-2" />
+                  Edit Profile
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsPasswordModalOpen(true)}
+                  className="flex-1 md:flex-none"
+                >
+                  <Key size={18} className="mr-2" />
+                  Ganti Password
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Edit Profile Modal */}
+          <Modal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            title="Edit Profile"
+          >
+            <form onSubmit={handleUpdateProfile} className="space-y-4">
+              <div>
+                <Input
+                  label="Nama Lengkap"
+                  value={profileData.nama}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, nama: e.target.value })
+                  }
+                  required
+                  placeholder="Masukkan nama lengkap"
+                />
+              </div>
+              <div>
+                <Input
+                  label="Email"
+                  type="email"
+                  value={profileData.email}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, email: e.target.value })
+                  }
+                  required
+                  placeholder="Masukkan email"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setIsEditModalOpen(false)}
+                >
+                  Batal
+                </Button>
+                <Button type="submit" className="flex-1" disabled={isLoading}>
+                  {isLoading ? 'Menyimpan...' : 'Simpan'}
+                </Button>
+              </div>
+            </form>
+          </Modal>
+
+          {/* Change Password Modal */}
+          <Modal
+            isOpen={isPasswordModalOpen}
+            onClose={() => setIsPasswordModalOpen(false)}
+            title="Ganti Password"
+          >
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <Input
+                  label="Password Lama"
+                  type="password"
+                  value={passwordData.oldPassword}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      oldPassword: e.target.value,
+                    })
+                  }
+                  required
+                  placeholder="Masukkan password lama"
+                />
+              </div>
+              <div>
+                <Input
+                  label="Password Baru"
+                  type="password"
+                  value={passwordData.newPassword}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      newPassword: e.target.value,
+                    })
+                  }
+                  required
+                  placeholder="Masukkan password baru"
+                />
+              </div>
+              <div>
+                <Input
+                  label="Konfirmasi Password Baru"
+                  type="password"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      confirmPassword: e.target.value,
+                    })
+                  }
+                  required
+                  placeholder="Masukkan kembali password baru"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setIsPasswordModalOpen(false)}
+                >
+                  Batal
+                </Button>
+                <Button type="submit" className="flex-1" disabled={isLoading}>
+                  {isLoading ? 'Memproses...' : 'Ganti Password'}
+                </Button>
+              </div>
+            </form>
+          </Modal>
+        </>
       )}
     </div>
   );

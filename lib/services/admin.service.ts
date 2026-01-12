@@ -14,12 +14,12 @@ import { PeminjamanBuku, PaginatedResponse } from '@/types';
 export const adminService = {
   /**
    * Get Current Admin Profile
-   * POST /api/admin/profile/me
+   * POST /api/admin/profile/saya
    */
   async getProfile(): Promise<any> {
     try {
       const response = await apiClient.post<ApiResponse<any>>(
-        '/admin/profile/me',
+        '/admin/profile',
         {}
       );
 
@@ -41,7 +41,7 @@ export const adminService = {
     try {
       const response = await apiClient.post<
         ApiResponse<DashboardStatsResponse>
-      >('/dashboard/stats');
+      >('/dashboard');
 
       if (
         response.status === 200 &&
@@ -59,7 +59,6 @@ export const adminService = {
         };
       }
     } catch (error: any) {
-
       // Return default values on error
       return {
         totalBuku: 0,
@@ -72,7 +71,7 @@ export const adminService = {
 
   /**
    * Get recent peminjaman
-   * POST /api/admin/peminjaman/recent-peminjaman
+   * POST /api/admin/peminjaman/peminjaman-terbaru
    */
   async getRecentPeminjaman(
     sortColumn: string = 'nama',
@@ -88,7 +87,7 @@ export const adminService = {
 
       const response = await apiClient.post<
         ApiResponse<PaginatedResponse<PeminjamanBuku>>
-      >('/admin/peminjaman/recent-peminjaman', requestBody);
+      >('/dashboard/peminjaman-terbaru', requestBody);
 
       if (
         response.status === 200 &&
@@ -109,12 +108,12 @@ export const adminService = {
 
   /**
    * Approve book return (Admin)
-   * POST /api/admin/peminjaman/{id}/approve-return
+   * POST /api/admin/peminjaman/{id}/persetujuan-pengembalian
    */
   async approveReturn(id: string): Promise<void> {
     try {
       const response = await apiClient.post<ApiResponse<void>>(
-        `/admin/peminjaman/${id}/approve-return`,
+        `/admin/peminjaman/${id}/persetujuan-pengembalian`,
         {}
       );
 
@@ -127,8 +126,33 @@ export const adminService = {
   },
 
   /**
+   * Get pending returns (Admin)
+   * POST /api/admin/peminjaman/pending-returns
+   */
+  async getPendingReturns(): Promise<PeminjamanBuku[]> {
+    try {
+      const response = await apiClient.post<
+        ApiResponse<PaginatedResponse<PeminjamanBuku>>
+      >('/admin/peminjaman/pending-returns', {});
+
+      if (
+        response.status === 200 &&
+        response.data.success &&
+        response.data.data
+      ) {
+        const paginatedData = response.data.data;
+        return paginatedData.content || [];
+      } else {
+        return [];
+      }
+    } catch (error: any) {
+      return [];
+    }
+  },
+
+  /**
    * Check and update overdue peminjaman (Admin)
-   * POST /api/admin/peminjaman/check-overdue
+   * POST /api/admin/peminjaman/memeriksa-tenggat-pengembalian
    * Automatically updates status to DENDA for books past the return date
    */
   async checkOverduePeminjaman(): Promise<{
@@ -138,7 +162,7 @@ export const adminService = {
     try {
       const response = await apiClient.post<
         ApiResponse<{ updated: number; message: string }>
-      >('/admin/peminjaman/check-overdue', {});
+      >('/admin/peminjaman/memeriksa-tenggat-pengembalian', {});
 
       if (
         response.status === 200 &&
@@ -200,7 +224,7 @@ export const adminService = {
 
   /**
    * Update Admin Profile
-   * POST /api/admin/profile/update
+   * POST /api/admin/profile/edit
    */
   async updateProfile(data: {
     id: string;
@@ -209,7 +233,7 @@ export const adminService = {
   }): Promise<void> {
     try {
       const response = await apiClient.post<ApiResponse<void>>(
-        '/admin/profile/update',
+        '/admin/profile/edit',
         data
       );
 
@@ -225,7 +249,7 @@ export const adminService = {
 
   /**
    * Change Admin Password
-   * POST /api/admin/change-password
+   * POST /api/admin/ubah-password
    */
   async changePassword(data: {
     id: string;
@@ -235,7 +259,7 @@ export const adminService = {
   }): Promise<void> {
     try {
       const response = await apiClient.post<ApiResponse<void>>(
-        '/admin/change-password',
+        '/admin/ubah-password',
         data
       );
 

@@ -1,8 +1,3 @@
-/**
- * Mahasiswa Request ViewModels
- * Sesuaikan dengan backend Java SearchMahasiswaRequestRecord & CreateMahasiswaRequestRecord
- */
-
 export interface SearchMahasiswaRequest {
   // Sorting parameters
   sortColumn?: string;
@@ -14,10 +9,10 @@ export interface SearchMahasiswaRequest {
 
   // Search parameters
   search?: string; // Global search in nama, nim, jurusan, alamat
-  nama?: string; // Search by nama only
-  nim?: string; // Search by nim only
-  jurusan?: string; // Search by jurusan only
-  alamat?: string; // Search by alamat only
+  nama?: string;
+  nim?: string;
+  jurusan?: string;
+  alamat?: string;
 }
 
 export interface CreateMahasiswaRequest {

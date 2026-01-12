@@ -514,13 +514,10 @@ export default function AdminDashboardPage() {
 
                   const getStatusVariant = (status: string) => {
                     switch (status) {
-                      case 'DIKEMBALIKAN':
                       case 'SUDAH_DIKEMBALIKAN':
                         return 'success';
                       case 'PENDING':
-                      case 'MENUNGGU_PERSETUJUAN':
                         return 'warning';
-                      case 'TERLAMBAT':
                       case 'DENDA':
                         return 'danger';
                       case 'DIPINJAM':

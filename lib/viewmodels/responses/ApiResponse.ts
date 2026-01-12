@@ -1,23 +1,4 @@
-/**
- * API Response ViewModels
- * Sesuaikan dengan response dari backend Java
- * BaseResponse<T> structure:
- * {
- *   "status": 200,
- *   "success": true,
- *   "message": "Berhasil Login",
- *   "data": T
- * }
- */
-
-import {
-  User,
-  Buku,
-  KategoriBuku,
-  Mahasiswa,
-  PeminjamanBuku,
-  StatusBuku,
-} from '@/types';
+import { User } from '@/types';
 
 // Standard API Response format dari backend Java
 export interface ApiResponse<T> {
@@ -27,27 +8,15 @@ export interface ApiResponse<T> {
   data?: T;
 }
 
-// Auth response - Backend mengembalikan user dengan token embedded
-// Format actual dari backend:
-// {
-//   "data": {
-//     "role": "ANGGOTA" | "ADMIN",
-//     "nama": "...",
-//     "id": "...",
-//     "email": "...",
-//     "token": "jwt_token_here",  <- Token embedded di user object
-//     "username": "...",
-//     "nim": "...",
-//     "jurusan": "..."
-//   }
-// }
 export interface AuthResponseData {
-  role: 'ADMIN' | 'ANGGOTA';
-  nama: string;
   id: string;
-  email: string;
-  token: string;
   username: string;
+  email: string;
+  role: 'ADMIN' | 'ANGGOTA';
+  token: string;
+
+  // profil bisa null /optional
+  nama: string;
   nim?: string;
   jurusan?: string;
 }
@@ -57,14 +26,11 @@ export function convertAuthResponseToUser(authData: AuthResponseData): {
   token: string;
   user: User;
 } {
-  // Mapping role "ANGGOTA" -> "USER"
-  const role = authData.role === 'ANGGOTA' ? 'USER' : authData.role;
-
   const user: User = {
-    id: parseInt(authData.id) || Number(authData.id), // Handle UUID string
+    id: authData.id,
     username: authData.username,
     email: authData.email,
-    role: role as 'ADMIN' | 'USER',
+    role: authData.role,
     nama: authData.nama,
     nim: authData.nim,
     jurusan: authData.jurusan,
@@ -72,11 +38,11 @@ export function convertAuthResponseToUser(authData: AuthResponseData): {
 
   return {
     token: authData.token,
-    user: user,
+    user,
   };
 }
 
-// Response lengkap dari login/register endpoint
+// Response lengkap dari login/pendaftaran endpoint
 export interface AuthResponse extends ApiResponse<AuthResponseData> {}
 
 export interface PaginatedResponse<T> {

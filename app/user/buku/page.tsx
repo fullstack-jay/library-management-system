@@ -11,8 +11,9 @@ import { Pagination } from '@/components/Pagination';
 import { Badge } from '@/components/Badge';
 import { Modal } from '@/components/Modal';
 import { api } from '@/lib/api';
-import { Buku, KategoriBuku, StatusBuku } from '@/types';
+import { Buku, KategoriBuku, BukuStatusResponse } from '@/types';
 import { BukuFilterRequest } from '@/lib/viewmodels/requests/BukuRequest';
+import { CreatePeminjamanRequest } from '@/lib/viewmodels/requests/PeminjamanRequest';
 import {
   Search,
   BookOpen,
@@ -33,7 +34,7 @@ export default function UserBukuPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [selectedBuku, setSelectedBuku] = useState<Buku | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [statusBuku, setStatusBuku] = useState<StatusBuku | null>(null);
+  const [statusBuku, setStatusBuku] = useState<BukuStatusResponse | null>(null);
   const [isPinning, setIsPinning] = useState(false);
 
   // Helper function untuk format lokasi buku
@@ -159,7 +160,7 @@ export default function UserBukuPage() {
         tanggalKembali: formatDate(tanggalKembali), // 7 hari dari sekarang
         statusBukuPinjaman: 'DIPINJAM',
         denda: 0,
-      };
+      } as CreatePeminjamanRequest;
       console.log({
         bukuId: bukuId,
         bukuIdType: typeof bukuId,

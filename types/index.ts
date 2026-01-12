@@ -1,16 +1,35 @@
-// User Types
+import type {
+  UserRole,
+  StatusMahasiswa,
+  StatusBukuPinjaman,
+  StatusBuku,
+} from './enums';
+
+export type {
+  UserRole,
+  StatusMahasiswa,
+  StatusBukuPinjaman,
+  StatusBuku,
+};
+
+/* =========================
+   USER
+========================= */
 export interface User {
   id: number | string;
   username: string;
   email: string;
   password?: string;
-  role: 'ADMIN' | 'USER' | 'ANGGOTA';
-  status?: string;
+  role: UserRole;
+
   nama?: string;
   nim?: string;
   jurusan?: string;
   notelepon?: string;
   alamat?: string;
+  fotoProfile?: string;
+  status?: UserRole;
+
   tanggalBergabung?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -35,80 +54,9 @@ export interface AuthResponse {
   user: User;
 }
 
-// Buku Types
-export interface Buku {
-  no?: number;
-  id: string;
-  judulBuku: string;
-  penulis: string;
-  penerbit: string;
-  tahunTerbit: number;
-  isbn?: string;
-  kategoriId?: string;
-  kategori?: KategoriBuku;
-  jumlahSalinan: number;
-  deskripsi?: string;
-  statusBuku: {
-    id: string;
-    statusBuku: 'TERSEDIA' | 'DIPINJAM' | 'BOOKED';
-  };
-  namaKategoriBuku?: string;
-  // Lokasi Rak - field terpisah sesuai database
-  lantai?: string;
-  ruang?: string;
-  rak?: string;
-  nomorRak?: string;
-  nomorBaris?: string;
-  // Field lama untuk backward compatibility
-  lokasiRak?: string;
-  createdAt?: string;
-  updatedAt?: string;
-
-  // Computed/aliased fields for compatibility
-  judul?: string;
-  pengarang?: string;
-  stok?: number;
-  status?: 'TERSEDIA' | 'DIPINJAM' | 'BOOKED';
-}
-
-export interface CreateBukuRequest {
-  judulBuku: string;
-  penulis: string;
-  penerbit: string;
-  tahunTerbit: number;
-  isbn?: string;
-  kategoriId?: string;
-  jumlahSalinan: number;
-  deskripsi?: string;
-  // Lokasi Rak - field terpisah sesuai database
-  lantai?: string;
-  ruang?: string;
-  rak?: string;
-  nomorRak?: string;
-  nomorBaris?: string;
-  statusBuku?: string;
-}
-
-export interface UpdateBukuRequest {
-  id: string;
-  judulBuku?: string;
-  penulis?: string;
-  penerbit?: string;
-  tahunTerbit?: number;
-  isbn?: string;
-  kategoriId?: string;
-  jumlahSalinan?: number;
-  deskripsi?: string;
-  // Lokasi Rak - field terpisah sesuai database
-  lantai?: string;
-  ruang?: string;
-  rak?: string;
-  nomorRak?: string;
-  nomorBaris?: string;
-  statusBuku?: string;
-}
-
-// Kategori Buku Types
+/* =========================
+   KATEGORI BUKU
+========================= */
 export interface KategoriBuku {
   id: string;
   nama: string;
@@ -123,25 +71,117 @@ export interface CreateKategoriRequest {
 }
 
 export interface UpdateKategoriRequest {
-  nama?: string;
+  id: string;
+  nama: string;
   deskripsi?: string;
 }
 
-// Mahasiswa Types
+/* =========================
+   BUKU
+========================= */
+export interface Buku {
+  no?: number;
+  id: string;
+  judulBuku: string;
+  penulis: string;
+  penerbit: string;
+  tahunTerbit: number;
+  isbn?: string;
+
+  kategoriId?: string;
+  kategori?: KategoriBuku;
+
+  jumlahSalinan: number;
+  deskripsi?: string;
+
+  statusBuku: {
+    id: string;
+    statusBuku: StatusBuku;
+  };
+
+  // Lokasi Rak
+  lantai?: string;
+  ruang?: string;
+  rak?: string;
+  nomorRak?: string;
+  nomorBaris?: string;
+
+  createdAt?: string;
+  updatedAt?: string;
+
+  // backward compatibility
+  judul?: string;
+  pengarang?: string;
+  stok?: number;
+  namaKategoriBuku?: string;
+  lokasiRak?: string;
+}
+
+export interface CreateBukuRequest {
+  judulBuku: string;
+  penulis: string;
+  penerbit: string;
+  tahunTerbit: number;
+  isbn?: string;
+  kategoriId?: string;
+  jumlahSalinan: number;
+  deskripsi?: string;
+
+  lantai?: string;
+  ruang?: string;
+  rak?: string;
+  nomorRak?: string;
+  nomorBaris?: string;
+
+  statusBuku?: StatusBuku;
+}
+
+export interface UpdateBukuRequest {
+  id: string;
+  judulBuku?: string;
+  penulis?: string;
+  penerbit?: string;
+  tahunTerbit?: number;
+  isbn?: string;
+  kategoriId?: string;
+  jumlahSalinan?: number;
+  deskripsi?: string;
+
+  lantai?: string;
+  ruang?: string;
+  rak?: string;
+  nomorRak?: string;
+  nomorBaris?: string;
+
+  statusBuku?: StatusBuku;
+}
+
+export interface StatusStokBuku {
+  bukuId: string;
+  stokTersedia: number;
+  stokDipinjam: number;
+  totalStok: number;
+}
+
+/* =========================
+   MAHASISWA
+========================= */
 export interface Mahasiswa {
   id: number;
   userId?: number;
+
   nama: string;
   nim: string;
   jurusan: string;
   alamat: string;
   phoneNumber: string;
+
   email?: string;
   username?: string;
-  password?: string;
-  role?: string; // Role dari user (ADMIN, USER, ANGGOTA, dll)
-  status: 'AKTIF' | 'TIDAK_AKTIF';
+
+  status: StatusMahasiswa;
   user?: User;
+
   createdAt?: string;
   updatedAt?: string;
 }
@@ -163,78 +203,77 @@ export interface UpdateMahasiswaRequest {
   jurusan?: string;
   alamat?: string;
   phoneNumber?: string;
-  status?: 'AKTIF' | 'TIDAK_AKTIF' | 'LULUS';
+  status?: StatusMahasiswa;
 }
 
-// Peminjaman Buku Types
+/* =========================
+   PEMINJAMAN BUKU
+========================= */
 export interface PeminjamanBuku {
-  // ID fields (UUID)
   id?: string;
   bukuId?: string;
   userId?: string;
   mahasiswaId?: number;
 
-  // Buku fields (dari response backend)
   judulBuku?: string;
   penulis?: string;
   penerbit?: string;
   tahunTerbit?: number;
   isbn?: string;
-  namaKategori?: string;
-  lokasiRak?: string;
-  jumlahSalinan?: number;
-  statusBukuTersedia?: string;
 
-  // User/Mahasiswa fields (dari response backend)
   nama?: string;
   nim?: string;
   username?: string;
   email?: string;
 
-  // Nested objects (backward compatibility)
   buku?: Buku;
   mahasiswa?: Mahasiswa;
 
-  // Peminjaman dates
   tanggalPinjam: string;
   tanggalKembali?: string;
   tanggalHarusKembali?: string;
-  statusBukuPinjaman?: string; // "DIPINJAM", "DIKEMBALIKAN", "TERLAMBAT", "DENDA", "MENUNGGU_PERSETUJUAN", dll
 
-  // Legacy status field
-  status?: 'DIPINJAM' | 'DIKEMBALIKAN' | 'TERLAMBAT' | 'DENDA' | 'MENUNGGU_PERSETUJUAN';
+  // 🔥 SESUAI StatusBukuPinjaman.java
+  statusBukuPinjaman?: StatusBukuPinjaman;
+
+  // backward compatibility
+  status?: StatusBukuPinjaman;
+
   denda?: number;
   catatan?: string;
+
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface CreatePeminjamanRequest {
-  bukuId: string; // UUID string from backend
-  tanggalPinjam: string; // Format: YYYY-MM-DD
-  tanggalKembali: string; // Format: YYYY-MM-DD
-  statusBukuPinjaman: string; // "DIPINJAM"
-  denda?: number; // Optional, default 0
+  bukuId: string;
+  tanggalPinjam: string;
+  tanggalKembali: string;
+  statusBukuPinjaman: StatusBukuPinjaman;
+  denda?: number;
 }
 
 export interface UpdatePeminjamanRequest {
   tanggalKembali?: string;
-  status?: 'DIPINJAM' | 'DIKEMBALIKAN' | 'TERLAMBAT' | 'DENDA' | 'MENUNGGU_PERSETUJUAN';
-  statusBukuPinjaman?: 'DIPINJAM' | 'DIKEMBALIKAN' | 'TERLAMBAT' | 'DENDA' | 'PENDING' | 'MENUNGGU_PERSETUJUAN';
+  status?: StatusBukuPinjaman;
+  statusBukuPinjaman?: StatusBukuPinjaman;
   denda?: number;
   catatan?: string;
 }
 
-// Status Buku Types
-export interface StatusBuku {
+// Status Buku Response (with stock information)
+export interface BukuStatusResponse {
   bukuId: number;
-  status: 'TERSEDIA' | 'DIPINJAM' | 'BOOKED';
+  status: StatusBuku;
   totalStok: number;
   stokTersedia: number;
   stokDipinjam: number;
 }
 
-// API Response Types
+/* =========================
+   API RESPONSE
+========================= */
 export interface ApiResponse<T> {
   success: boolean;
   message: string;

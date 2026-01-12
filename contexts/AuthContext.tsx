@@ -74,10 +74,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     } catch (error: any) {
       // Extract error message from backend response
-      const errorMessage = error.response?.data?.message ||
-                          error.response?.data?.data ||
-                          error.message ||
-                          'Login failed. Please try again.';
+      const message = error.response?.data?.message;
+      const data = error.response?.data?.data;
+
+      // Prioritize data field for more specific error message
+      let errorMessage = error.message || 'Login failed. Please try again.';
+
+      if (data) {
+        // Use data field as primary error message (more specific)
+        errorMessage = data;
+      } else if (message) {
+        // Fallback to message field if data is not available
+        errorMessage = message;
+      }
+
       throw new Error(errorMessage);
     }
   };

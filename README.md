@@ -5,11 +5,13 @@ Aplikasi Sistem Manajemen Perpustakaan Kampus yang dibangun dengan Next.js 16, R
 ## Fitur Utama
 
 ### 🔐 Autentikasi & Autorisasi
+
 - Login dan Register untuk mahasiswa dan admin
 - Role-based access control (Admin & User)
 - Token-based authentication dengan JWT
 
 ### 👨‍💼 Fitur Admin
+
 - **Dashboard**: Overview statistik perpustakaan
 - **Manajemen Buku**: CRUD buku dengan fitur pencarian dan pagination
 - **Manajemen Kategori**: CRUD kategori buku
@@ -17,6 +19,7 @@ Aplikasi Sistem Manajemen Perpustakaan Kampus yang dibangun dengan Next.js 16, R
 - **Manajemen Peminjaman**: Kelola peminjaman, pengembalian, dan denda
 
 ### 👨‍🎓 Fitur User (Mahasiswa)
+
 - **Dashboard**: Overview peminjaman aktif dan statistik
 - **Katalog Buku**: Cari dan telusuri buku dengan filter kategori
 - **Peminjaman Buku**: Pinjam buku dengan real-time status
@@ -26,6 +29,7 @@ Aplikasi Sistem Manajemen Perpustakaan Kampus yang dibangun dengan Next.js 16, R
 ## Teknologi yang Digunakan
 
 ### Frontend
+
 - **Next.js 16** - React framework dengan App Router
 - **React 19** - UI library
 - **TypeScript** - Type safety
@@ -35,6 +39,7 @@ Aplikasi Sistem Manajemen Perpustakaan Kampus yang dibangun dengan Next.js 16, R
 - **date-fns** - Date manipulation
 
 ### Backend (Java)
+
 - Spring Boot
 - Spring Security
 - JPA/Hibernate
@@ -84,11 +89,13 @@ library-management-system/
 ## API Endpoints
 
 ### Auth
+
 - `POST /api/auth/login` - Login
-- `POST /api/auth/register` - Register
+- `POST /api/auth/pendaftaran ` - Pendaftaran
 - `POST /api/auth/logout` - Logout
 
 ### Admin
+
 - `GET /api/admin/dashboard` - Get dashboard stats
 - `GET /api/admin/buku` - Get all buku
 - `POST /api/admin/buku` - Create buku
@@ -107,6 +114,7 @@ library-management-system/
 - `DELETE /api/admin/peminjaman/:id` - Delete peminjaman
 
 ### User
+
 - `GET /api/user/profile` - Get user profile
 - `PUT /api/user/profile` - Update profile
 - `GET /api/user/buku` - Get katalog buku
@@ -119,6 +127,7 @@ library-management-system/
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js 20+
 - npm atau yarn
 - Backend Java API (running on port 8080)
@@ -126,27 +135,32 @@ library-management-system/
 ### Installation
 
 1. Clone repository
+
 ```bash
 git clone <repository-url>
 cd library-management-system
 ```
 
 2. Install dependencies
+
 ```bash
 npm install
 ```
 
 3. Configure environment
+
 ```bash
 cp .env.example .env.local
 ```
 
 Edit `.env.local` dan sesuaikan dengan URL backend:
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
 4. Run development server
+
 ```bash
 npm run dev
 ```
@@ -163,10 +177,12 @@ npm start
 ## Credentials Demo
 
 ### Admin
+
 - Username: `admin`
 - Password: `admin123`
 
 ### User
+
 - Username: `user`
 - Password: `user123`
 

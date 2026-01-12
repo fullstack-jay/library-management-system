@@ -10,11 +10,15 @@ export interface CreateKategoriRequest {
 
 export interface UpdateKategoriRequest {
   id: string;
-  nama?: string;
+  nama: string;
   deskripsi?: string;
 }
 
 export interface KategoriBukuFilterRequest {
+  sortColumn?: string;
+  sortColumnDir?: string;
+  pageNumber?: number;
+  pageSize?: number;
   search?: string;
   nama?: string;
 }

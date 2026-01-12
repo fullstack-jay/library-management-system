@@ -35,11 +35,9 @@ export const mahasiswaService = {
       sortColumnDir: params?.sortColumnDir,
     };
 
-
     const response = await apiClient.post<
       ApiResponse<PaginatedResponse<Mahasiswa>>
     >('/admin/mahasiswa/find-all', backendParams);
-
 
     // Handle backend response format
     if (
@@ -108,14 +106,14 @@ export const mahasiswaService = {
 
   /**
    * Update mahasiswa
-   * POST /api/admin/mahasiswa/update
+   * POST /api/admin/mahasiswa/edit
    */
   async updateMahasiswa(
     id: number,
     data: UpdateMahasiswaRequest
   ): Promise<Mahasiswa> {
     const response = await apiClient.post<ApiResponse<Mahasiswa>>(
-      `/admin/mahasiswa/update`,
+      `/admin/mahasiswa/edit`,
       {
         id,
         ...data,
@@ -139,12 +137,10 @@ export const mahasiswaService = {
    * Backend expects userId (String) to delete both mahasiswa and user records
    */
   async deleteMahasiswa(userId: number): Promise<void> {
-
     try {
       const response = await apiClient.delete<ApiResponse<void>>(
         `/admin/mahasiswa/${userId}`
       );
-
 
       if (response.status !== 200 || !response.data.success) {
         throw new Error(response.data.message || 'Failed to delete mahasiswa');

@@ -13,7 +13,7 @@ export const userService = {
    * GET /api/user/profile
    */
   async getUserProfile(): Promise<any> {
-    const response = await apiClient.post('/user/profile/me');
+    const response = await apiClient.post('/user/profile');
     return response.data;
   },
 

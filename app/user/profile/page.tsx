@@ -33,7 +33,9 @@ export default function UserProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const [formData, setFormData] = useState<UpdateProfileRequest & { password?: string }>({
+  const [formData, setFormData] = useState<
+    UpdateProfileRequest & { password?: string }
+  >({
     id: '',
     nama: '',
     username: '',
@@ -48,7 +50,11 @@ export default function UserProfilePage() {
   });
 
   const [profileData, setProfileData] = useState<
-    UpdateProfileRequest & { fotoProfile?: string; tanggalBergabung?: string; password?: string }
+    UpdateProfileRequest & {
+      fotoProfile?: string;
+      tanggalBergabung?: string;
+      password?: string;
+    }
   >({
     id: '',
     nama: '',
@@ -107,7 +113,7 @@ export default function UserProfilePage() {
         const finalFotoUrl =
           userData.fotoUrl || userData.fotoProfile || userData.foto || '';
 
-        // ID directly from /user/profile/me response
+        // ID directly from /user/profile response
         setProfileData({
           id: userData.id || '',
           nama: userData.nama || '',
@@ -120,7 +126,8 @@ export default function UserProfilePage() {
           notelepon: userData.notelepon || userData.noHp || '',
           alamat: userData.alamat || '',
           fotoProfile: finalFotoUrl,
-          tanggalBergabung: userData.tanggalBergabung || userData.createdAt || '',
+          tanggalBergabung:
+            userData.tanggalBergabung || userData.createdAt || '',
           password: userData.password || '',
         });
 
@@ -330,7 +337,8 @@ export default function UserProfilePage() {
           alamat: userData.alamat || '',
           fotoProfile:
             userData.fotoUrl || userData.fotoProfile || userData.foto || '',
-          tanggalBergabung: userData.tanggalBergabung || userData.createdAt || '',
+          tanggalBergabung:
+            userData.tanggalBergabung || userData.createdAt || '',
           password: userData.password || profileData.password || '',
         });
 
@@ -636,7 +644,9 @@ export default function UserProfilePage() {
               <p className="text-sm text-gray-600">Member Since</p>
               <p className="text-lg font-semibold text-gray-900">
                 {mounted && (profileData.tanggalBergabung || user?.createdAt)
-                  ? new Date(profileData.tanggalBergabung || user?.createdAt || '').toLocaleDateString('id-ID', {
+                  ? new Date(
+                      profileData.tanggalBergabung || user?.createdAt || ''
+                    ).toLocaleDateString('id-ID', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',

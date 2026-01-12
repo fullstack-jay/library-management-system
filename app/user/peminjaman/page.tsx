@@ -8,7 +8,7 @@ import { Badge } from '@/components/Badge';
 import { Modal } from '@/components/Modal';
 import { Pagination } from '@/components/Pagination';
 import { api } from '@/lib/api';
-import { PeminjamanBuku } from '@/types';
+import { PeminjamanBuku, PaginatedResponse } from '@/types';
 import { Calendar, Clock, AlertCircle, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -35,14 +35,14 @@ export default function UserPeminjamanPage() {
         pageSize: 10,
         sortColumn: 'tanggalPinjam',
         sortColumnDir: 'DESC',
-      });
+      }) as PaginatedResponse<PeminjamanBuku> | PeminjamanBuku[];
 
       // Handle paginated response
       if (response && Array.isArray(response)) {
         // Old format: simple array
         setPeminjamanList(response);
         setTotalPages(1);
-      } else if (response && response.content) {
+      } else if (response && 'content' in response) {
         // New format: paginated response
         setPeminjamanList(response.content || []);
         setTotalPages(response.totalPages || 0);
@@ -119,11 +119,11 @@ export default function UserPeminjamanPage() {
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'DIKEMBALIKAN':
       case 'SUDAH_DIKEMBALIKAN':
-      case 'DIKEMBALIKAN':
         return 'success';
-      case 'TERLAMBAT':
+      case 'PENDING':
+        return 'warning';
+      case 'DENDA':
         return 'danger';
       case 'DIPINJAM':
         return 'info';
@@ -343,7 +343,7 @@ export default function UserPeminjamanPage() {
                   const tanggalKembali = peminjaman.tanggalKembali || peminjaman.tanggalHarusKembali || '';
                   const tanggalDikembalikan = peminjaman.tanggalKembali || '-';
                   const tanggalHarusKembali = peminjaman.tanggalHarusKembali || tanggalKembali;
-                  const status = peminjaman.statusBukuPinjaman || peminjaman.status || 'DIKEMBALIKAN';
+                  const status = peminjaman.statusBukuPinjaman || peminjaman.status || 'DIPINJAM';
 
                   return (
                     <div

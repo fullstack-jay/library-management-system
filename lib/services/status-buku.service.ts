@@ -5,17 +5,17 @@
  */
 
 import { apiClient } from '../api-client';
-import { StatusBuku, ApiResponse } from '@/types';
+import { BukuStatusResponse, ApiResponse } from '@/types';
 
 export const statusBukuService = {
   /**
    * Get status buku
    * GET /api/user/status-buku/:bukuId
    */
-  async getStatusBuku(bukuId: string): Promise<StatusBuku> {
+  async getStatusBuku(bukuId: string): Promise<BukuStatusResponse> {
 
     try {
-      const response = await apiClient.get<ApiResponse<StatusBuku>>(
+      const response = await apiClient.get<ApiResponse<BukuStatusResponse>>(
         `/user/status-buku/${bukuId}`
       );
 

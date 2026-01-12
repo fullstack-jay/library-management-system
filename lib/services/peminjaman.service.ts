@@ -31,7 +31,11 @@ export const peminjamanService = {
     const backendParams: SearchPeminjamanRequest = {
       pageNumber: (params?.page ?? 0) + 1, // Convert to 1-based
       pageSize: params?.size ?? 10,
-      status: params?.status,
+      status: params?.status as
+        | 'PENDING'
+        | 'DIPINJAM'
+        | 'DENDA'
+        | 'SUDAH_DIKEMBALIKAN',
       sortColumn: params?.sortColumn,
       sortColumnDir: params?.sortColumnDir,
     };
@@ -86,14 +90,14 @@ export const peminjamanService = {
 
   /**
    * Update peminjaman (Admin)
-   * POST /api/admin/peminjaman/{id}/update
+   * POST /api/admin/peminjaman/{id}/edit
    */
   async updatePeminjamanAdmin(
     id: string,
     data: UpdatePeminjamanRequest
   ): Promise<PeminjamanBuku> {
     const response = await apiClient.post<ApiResponse<PeminjamanBuku>>(
-      `/admin/peminjaman/${id}/update`,
+      `/admin/peminjaman/${id}/edit`,
       data
     );
 
@@ -122,22 +126,6 @@ export const peminjamanService = {
     }
   },
 
-  // ===== USER ENDPOINTS =====
-
-  /**
-   * Get all peminjaman user (User)
-   * POST /api/user/peminjaman/find-all
-   *
-   * Request body:
-   * {
-   *   "sortColumn": "",
-   *   "sortColumnDir": "ASC",
-   *   "pageNumber": 1,
-   *   "pageSize": 10,
-   *   "search": "",
-   *   "status": ""
-   * }
-   */
   async getAllPeminjamanUser(params?: {
     pageNumber?: number;
     pageSize?: number;

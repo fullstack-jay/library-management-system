@@ -180,8 +180,7 @@ export default function AdminMahasiswaPage() {
       }
       handleCloseModal();
       fetchMahasiswaList();
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const handleDelete = async () => {
@@ -189,7 +188,6 @@ export default function AdminMahasiswaPage() {
       try {
         // Backend expects userId to delete both mahasiswa and user records
         const userId = selectedMahasiswa.userId || selectedMahasiswa.id;
-
 
         if (!userId) {
           alert('Error: UserId tidak ditemukan untuk mahasiswa ini');
@@ -200,11 +198,11 @@ export default function AdminMahasiswaPage() {
         setIsDeleteModalOpen(false);
         fetchMahasiswaList();
       } catch (error: any) {
-
-        const errorMsg = error.response?.data?.message ||
-                        error.response?.data?.data ||
-                        error.message ||
-                        'Gagal menghapus mahasiswa';
+        const errorMsg =
+          error.response?.data?.message ||
+          error.response?.data?.data ||
+          error.message ||
+          'Gagal menghapus mahasiswa';
         alert(`Error: ${errorMsg}`);
       }
     }
@@ -482,7 +480,7 @@ export default function AdminMahasiswaPage() {
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <Badge variant="info">
-                          {(mahasiswa.role || mahasiswa.user?.role || '-').toUpperCase()}
+                          {(mahasiswa.user?.role || '-').toUpperCase()}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-sm">
@@ -725,7 +723,7 @@ export default function AdminMahasiswaPage() {
                   Role
                 </label>
                 <p className="text-gray-900 font-semibold">
-                  {(selectedMahasiswa.role || selectedMahasiswa.user?.role || '-').toUpperCase()}
+                  {(selectedMahasiswa.user?.role || '-').toUpperCase()}
                 </p>
               </div>
               <div>

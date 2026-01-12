@@ -1,8 +1,3 @@
-/**
- * Auth Request ViewModels
- * Sesuaikan dengan backend Java AuthController
- */
-
 export interface LoginRequest {
   username: string;
   password: string;

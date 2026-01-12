@@ -11,15 +11,25 @@ import { Pagination } from '@/components/Pagination';
 import { Badge } from '@/components/Badge';
 import { Dropdown } from '@/components/Dropdown';
 import { api } from '@/lib/api';
-import { PeminjamanBuku, UpdatePeminjamanRequest } from '@/types';
-import { Calendar, Filter, Search, MoreVertical, Eye, Pencil, Trash2, CheckCircle as CheckCircleIcon } from 'lucide-react';
+import { PeminjamanBuku, UpdatePeminjamanRequest, StatusBukuPinjaman } from '@/types';
+import {
+  Calendar,
+  Filter,
+  Search,
+  MoreVertical,
+  Eye,
+  Pencil,
+  Trash2,
+  CheckCircle as CheckCircleIcon,
+} from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function AdminPeminjamanPage() {
   const [peminjamanList, setPeminjamanList] = useState<PeminjamanBuku[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedPeminjaman, setSelectedPeminjaman] = useState<PeminjamanBuku | null>(null);
+  const [selectedPeminjaman, setSelectedPeminjaman] =
+    useState<PeminjamanBuku | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('tanggalPinjam');
@@ -28,21 +38,23 @@ export default function AdminPeminjamanPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [formData, setFormData] = useState<UpdatePeminjamanRequest>({
-    status: 'DIPINJAM',
-    statusBukuPinjaman: 'DIPINJAM',
+    status: 'DIPINJAM' as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN',
+    statusBukuPinjaman: 'DIPINJAM' as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN',
     tanggalKembali: new Date().toISOString().split('T')[0],
     denda: undefined,
     catatan: '',
   });
-  const [approvingPeminjamanId, setApprovingPeminjamanId] = useState<string | null>(null);
+  const [approvingPeminjamanId, setApprovingPeminjamanId] = useState<
+    string | null
+  >(null);
 
   // Mapping sortBy ke backend column names
   const getBackendSortColumn = (sortBy: string): string => {
     const columnMap: Record<string, string> = {
-      'tanggalPinjam': 'tanggalPinjam',
-      'tanggalKembali': 'tanggalHarusKembali', // Backend might use tanggalHarusKembali
-      'nama': 'nama',
-      'judulBuku': 'judulBuku',
+      tanggalPinjam: 'tanggalPinjam',
+      tanggalKembali: 'tanggalHarusKembali', // Backend might use tanggalHarusKembali
+      nama: 'nama',
+      judulBuku: 'judulBuku',
     };
     return columnMap[sortBy] || sortBy;
   };
@@ -56,7 +68,6 @@ export default function AdminPeminjamanPage() {
       setIsLoading(true);
       const backendSortColumn = getBackendSortColumn(sortBy);
 
-
       const response = await api.getAllPeminjamanAdmin({
         page: currentPage,
         size: 10,
@@ -65,8 +76,6 @@ export default function AdminPeminjamanPage() {
         sortColumnDir: sortOrder,
       });
 
-      if (response.content && response.content.length > 0) {
-      }
       setPeminjamanList(response.content || []);
       setTotalPages(response.totalPages || 0);
       setTotalItems(response.totalElements || 0);
@@ -82,12 +91,13 @@ export default function AdminPeminjamanPage() {
   const handleOpenModal = (peminjaman: PeminjamanBuku) => {
     setSelectedPeminjaman(peminjaman);
 
-    // Use statusBukuPinjaman or fallback to status
-    const status = peminjaman.statusBukuPinjaman || peminjaman.status || 'DIPINJAM';
+    // Use statusBukuPinjaman or fallback to status, ensure it's a valid status type
+    const rawStatus = peminjaman.statusBukuPinjaman || peminjaman.status || 'DIPINJAM';
+    const status = rawStatus as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN';
 
     setFormData({
-      status: status as 'DIPINJAM' | 'DIKEMBALIKAN' | 'TERLAMBAT' | 'PENDING' | 'MENUNGGU_PERSETUJUAN',
-      statusBukuPinjaman: status as 'DIPINJAM' | 'DIKEMBALIKAN' | 'TERLAMBAT' | 'PENDING' | 'MENUNGGU_PERSETUJUAN',
+      status: status,
+      statusBukuPinjaman: status,
       tanggalKembali: peminjaman.tanggalKembali
         ? new Date(peminjaman.tanggalKembali).toISOString().split('T')[0]
         : new Date().toISOString().split('T')[0],
@@ -104,21 +114,20 @@ export default function AdminPeminjamanPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPeminjaman || !selectedPeminjaman.id) return;
+    const selectedId = selectedPeminjaman?.id;
+    if (!selectedPeminjaman || !selectedId) return;
 
     try {
-      // Convert undefined denda to 0 for backend
-      // Send both status and statusBukuPinjaman to ensure backend accepts it
-      const submitData = {
+      // Ensure all required fields have values before sending to backend
+      const submitData: UpdatePeminjamanRequest = {
         tanggalKembali: formData.tanggalKembali,
-        status: formData.status,
-        statusBukuPinjaman: formData.status, // Backend expects statusBukuPinjaman
+        status: formData.status || ('DIPINJAM' as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN'),
+        statusBukuPinjaman: formData.statusBukuPinjaman || ('DIPINJAM' as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN'),
         denda: formData.denda ?? 0,
-        catatan: formData.catatan,
+        catatan: formData.catatan || '',
       };
 
-
-      await api.updatePeminjamanAdmin(selectedPeminjaman.id, submitData);
+      await api.updatePeminjamanAdmin(selectedId, submitData);
       handleCloseModal();
       fetchPeminjamanList();
 
@@ -142,8 +151,8 @@ export default function AdminPeminjamanPage() {
   const handleReturnBook = async (peminjaman: PeminjamanBuku) => {
     setSelectedPeminjaman(peminjaman);
     setFormData({
-      status: 'DIKEMBALIKAN',
-      statusBukuPinjaman: 'DIKEMBALIKAN',
+      status: 'SUDAH_DIKEMBALIKAN' as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN',
+      statusBukuPinjaman: 'SUDAH_DIKEMBALIKAN' as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN',
       tanggalKembali: new Date().toISOString().split('T')[0],
       denda: undefined,
       catatan: '',
@@ -160,12 +169,13 @@ export default function AdminPeminjamanPage() {
   const handleEdit = (peminjaman: PeminjamanBuku) => {
     setSelectedPeminjaman(peminjaman);
 
-    // Use statusBukuPinjaman or fallback to status
-    const status = peminjaman.statusBukuPinjaman || peminjaman.status || 'DIPINJAM';
+    // Use statusBukuPinjaman or fallback to status, ensure it's a valid status type
+    const rawStatus = peminjaman.statusBukuPinjaman || peminjaman.status || 'DIPINJAM';
+    const status = rawStatus as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN';
 
     setFormData({
-      status: status as 'DIPINJAM' | 'DIKEMBALIKAN' | 'TERLAMBAT' | 'PENDING' | 'MENUNGGU_PERSETUJUAN',
-      statusBukuPinjaman: status as 'DIPINJAM' | 'DIKEMBALIKAN' | 'TERLAMBAT' | 'PENDING' | 'MENUNGGU_PERSETUJUAN',
+      status: status,
+      statusBukuPinjaman: status,
       tanggalKembali: peminjaman.tanggalKembali
         ? new Date(peminjaman.tanggalKembali).toISOString().split('T')[0]
         : new Date().toISOString().split('T')[0],
@@ -176,9 +186,11 @@ export default function AdminPeminjamanPage() {
   };
 
   const handleDelete = async (peminjaman: PeminjamanBuku) => {
-    if (!peminjaman.id) return;
+    const peminjamanId = peminjaman.id;
+    if (!peminjamanId) return;
 
-    const bukuJudul = peminjaman.judulBuku || peminjaman.buku?.judulBuku || 'ini';
+    const bukuJudul =
+      peminjaman.judulBuku || peminjaman.buku?.judulBuku || 'ini';
 
     Swal.fire({
       title: 'Hapus Peminjaman?',
@@ -192,7 +204,7 @@ export default function AdminPeminjamanPage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await api.deletePeminjaman(peminjaman.id);
+          await api.deletePeminjaman(peminjamanId);
           Swal.fire({
             icon: 'success',
             title: 'Terhapus!',
@@ -214,16 +226,23 @@ export default function AdminPeminjamanPage() {
   };
 
   const handleApproveReturn = async (peminjaman: PeminjamanBuku) => {
-    if (!peminjaman.id) return;
+    const peminjamanId = peminjaman.id;
+    if (!peminjamanId) return;
 
-    const bukuJudul = peminjaman.judulBuku || peminjaman.buku?.judulBuku || 'ini';
-    const mahasiswaNama = peminjaman.nama || peminjaman.namaMahasiswa || peminjaman.mahasiswa?.nama || '-';
+    const bukuJudul =
+      peminjaman.judulBuku || peminjaman.buku?.judulBuku || 'ini';
+    const mahasiswaNama =
+      peminjaman.nama ||
+      peminjaman.mahasiswa?.nama ||
+      '-';
     const mahasiswaNim = peminjaman.nim || peminjaman.mahasiswa?.nim || '';
 
     // Show confirmation dialog
     Swal.fire({
       title: 'Setujui Pengembalian?',
-      html: `Apakah Anda yakin ingin menyetujui pengembalian buku ini?<br><br><strong>Buku:</strong> ${bukuJudul}<br><strong>Mahasiswa:</strong> ${mahasiswaNama}${mahasiswaNim && mahasiswaNim !== '-' ? ` (${mahasiswaNim})` : ''}`,
+      html: `Apakah Anda yakin ingin menyetujui pengembalian buku ini?<br><br><strong>Buku:</strong> ${bukuJudul}<br><strong>Mahasiswa:</strong> ${mahasiswaNama}${
+        mahasiswaNim && mahasiswaNim !== '-' ? ` (${mahasiswaNim})` : ''
+      }`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#22c55e',
@@ -233,8 +252,8 @@ export default function AdminPeminjamanPage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          setApprovingPeminjamanId(peminjaman.id);
-          await api.approveReturn(peminjaman.id);
+          setApprovingPeminjamanId(peminjamanId);
+          await api.approveReturn(peminjamanId);
           Swal.fire({
             icon: 'success',
             title: 'Berhasil Disetujui!',
@@ -245,10 +264,11 @@ export default function AdminPeminjamanPage() {
           });
           fetchPeminjamanList();
         } catch (error: any) {
-          const errorMsg = error.response?.data?.message ||
-                          error.response?.data?.data ||
-                          error.message ||
-                          'Gagal menyetujui pengembalian';
+          const errorMsg =
+            error.response?.data?.message ||
+            error.response?.data?.data ||
+            error.message ||
+            'Gagal menyetujui pengembalian';
           Swal.fire({
             icon: 'error',
             title: 'Gagal Menyetujui',
@@ -264,13 +284,10 @@ export default function AdminPeminjamanPage() {
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'DIKEMBALIKAN':
       case 'SUDAH_DIKEMBALIKAN':
         return 'success';
       case 'PENDING':
-      case 'MENUNGGU_PERSETUJUAN':
         return 'warning';
-      case 'TERLAMBAT':
       case 'DENDA':
         return 'danger';
       case 'DIPINJAM':
@@ -288,7 +305,9 @@ export default function AdminPeminjamanPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Manajemen Peminjaman</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Manajemen Peminjaman
+          </h1>
           <p className="mt-2 text-gray-600">Kelola peminjaman buku mahasiswa</p>
         </div>
       </div>
@@ -328,10 +347,9 @@ export default function AdminPeminjamanPage() {
                 options={[
                   { value: '', label: 'Semua Status' },
                   { value: 'DIPINJAM', label: 'Dipinjam' },
-                  { value: 'DIKEMBALIKAN', label: 'Dikembalikan' },
-                  { value: 'TERLAMBAT', label: 'Terlambat' },
-                  { value: 'DENDA', label: 'Denda' },
-                  { value: 'MENUNGGU_PERSETUJUAN', label: 'Menunggu Persetujuan' },
+                  { value: 'SUDAH_DIKEMBALIKAN', label: 'Sudah Dikembalikan' },
+                  { value: 'DENDA', label: 'Terlambat' },
+                  { value: 'PENDING', label: 'Pending' },
                 ]}
               />
             </div>
@@ -435,146 +453,176 @@ export default function AdminPeminjamanPage() {
                 {peminjamanList.length > 0 ? (
                   peminjamanList.map((peminjaman, index) => {
                     // Get data from backend response or nested object
-                    const mahasiswaNama = peminjaman.nama && peminjaman.nama.trim() !== ''
-                      ? peminjaman.nama
-                      : (peminjaman.mahasiswa?.nama && peminjaman.mahasiswa.nama.trim() !== ''
+                    const mahasiswaNama =
+                      peminjaman.nama && peminjaman.nama.trim() !== ''
+                        ? peminjaman.nama
+                        : peminjaman.mahasiswa?.nama &&
+                          peminjaman.mahasiswa.nama.trim() !== ''
                         ? peminjaman.mahasiswa.nama
-                        : '-');
-                    const mahasiswaNim = peminjaman.nim && peminjaman.nim.trim() !== ''
-                      ? peminjaman.nim
-                      : (peminjaman.mahasiswa?.nim && peminjaman.mahasiswa.nim.trim() !== ''
+                        : '-';
+                    const mahasiswaNim =
+                      peminjaman.nim && peminjaman.nim.trim() !== ''
+                        ? peminjaman.nim
+                        : peminjaman.mahasiswa?.nim &&
+                          peminjaman.mahasiswa.nim.trim() !== ''
                         ? peminjaman.mahasiswa.nim
-                        : '-');
-                    const bukuJudul = peminjaman.judulBuku && peminjaman.judulBuku.trim() !== ''
-                      ? peminjaman.judulBuku
-                      : (peminjaman.buku?.judulBuku && peminjaman.buku.judulBuku.trim() !== ''
+                        : '-';
+                    const bukuJudul =
+                      peminjaman.judulBuku && peminjaman.judulBuku.trim() !== ''
+                        ? peminjaman.judulBuku
+                        : peminjaman.buku?.judulBuku &&
+                          peminjaman.buku.judulBuku.trim() !== ''
                         ? peminjaman.buku.judulBuku
-                        : (peminjaman.buku?.judul && peminjaman.buku.judul.trim() !== ''
-                          ? peminjaman.buku.judul
-                          : '-'));
-                    const tanggalKembali = peminjaman.tanggalKembali || peminjaman.tanggalHarusKembali || '';
-                    const status = peminjaman.statusBukuPinjaman || peminjaman.status || 'DIPINJAM';
+                        : peminjaman.buku?.judul &&
+                          peminjaman.buku.judul.trim() !== ''
+                        ? peminjaman.buku.judul
+                        : '-';
+                    const tanggalKembali =
+                      peminjaman.tanggalKembali ||
+                      peminjaman.tanggalHarusKembali ||
+                      '';
+                    const status =
+                      peminjaman.statusBukuPinjaman ||
+                      peminjaman.status ||
+                      'DIPINJAM';
 
                     // Calculate row number based on sort order and current data count
                     // ASC (Menaik): 1, 2, 3... | DESC (Menurun): 3, 2, 1 (if 3 items)
-                    const rowNumber = sortOrder === 'DESC'
-                      ? currentPage * 10 + peminjamanList.length - index  // 3, 2, 1 for 3 items on page 1
-                      : currentPage * 10 + index + 1;                     // 1, 2, 3 for page 1
+                    const rowNumber =
+                      sortOrder === 'DESC'
+                        ? currentPage * 10 + peminjamanList.length - index // 3, 2, 1 for 3 items on page 1
+                        : currentPage * 10 + index + 1; // 1, 2, 3 for page 1
 
                     return (
-                    <tr
-                      key={peminjaman.id}
-                      className={`hover:bg-gray-50 ${
-                        isLate(tanggalKembali) &&
-                        (status === 'DIPINJAM' || status.includes('DIPINJAM'))
-                          ? 'bg-red-50'
-                          : ''
-                      }`}
-                    >
-                      <td className="px-4 py-3 text-sm text-gray-900 font-medium">
-                        {rowNumber}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <Dropdown
-                          trigger={
-                            <Button size="sm" variant="outline">
-                              <MoreVertical size={16} />
-                            </Button>
-                          }
-                          options={[
-                            {
-                              label: 'Detail Data',
-                              onClick: () => handleViewDetail(peminjaman),
-                              icon: <Eye size={16} />,
-                            },
-                            {
-                              label: 'Edit Data',
-                              onClick: () => handleEdit(peminjaman),
-                              icon: <Pencil size={16} />,
-                            },
-                            ...(status === 'DIPINJAM' || status.includes('DIPINJAM') ? [{
-                              label: 'Kembalikan',
-                              onClick: () => handleReturnBook(peminjaman),
-                              icon: <CheckCircle size={16} />,
-                            }] : []),
-                            {
-                              label: 'Hapus Data',
-                              onClick: () => handleDelete(peminjaman),
-                              variant: 'danger',
-                              icon: <Trash2 size={16} />,
-                            },
-                          ]}
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        <div>
-                          <div className="font-medium">
-                            {mahasiswaNama}
+                      <tr
+                        key={peminjaman.id}
+                        className={`hover:bg-gray-50 ${
+                          isLate(tanggalKembali) &&
+                          (status === 'DIPINJAM' || status.includes('DIPINJAM'))
+                            ? 'bg-red-50'
+                            : ''
+                        }`}
+                      >
+                        <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                          {rowNumber}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <Dropdown
+                            trigger={
+                              <Button size="sm" variant="outline">
+                                <MoreVertical size={16} />
+                              </Button>
+                            }
+                            options={[
+                              {
+                                label: 'Detail Data',
+                                onClick: () => handleViewDetail(peminjaman),
+                                icon: <Eye size={16} />,
+                              },
+                              {
+                                label: 'Edit Data',
+                                onClick: () => handleEdit(peminjaman),
+                                icon: <Pencil size={16} />,
+                              },
+                              ...(status === 'DIPINJAM' ||
+                              status.includes('DIPINJAM')
+                                ? [
+                                    {
+                                      label: 'Kembalikan',
+                                      onClick: () =>
+                                        handleReturnBook(peminjaman),
+                                      icon: <CheckCircleIcon size={16} />,
+                                    },
+                                  ]
+                                : []),
+                              {
+                                label: 'Hapus Data',
+                                onClick: () => handleDelete(peminjaman),
+                                variant: 'danger',
+                                icon: <Trash2 size={16} />,
+                              },
+                            ]}
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <div>
+                            <div className="font-medium">{mahasiswaNama}</div>
+                            {mahasiswaNim && mahasiswaNim !== '-' && (
+                              <div className="text-xs text-gray-500">
+                                {mahasiswaNim}
+                              </div>
+                            )}
                           </div>
-                          {mahasiswaNim && mahasiswaNim !== '-' && (
-                            <div className="text-xs text-gray-500">
-                              {mahasiswaNim}
-                            </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {bukuJudul}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {format(
+                            new Date(peminjaman.tanggalPinjam),
+                            'dd/MM/yyyy'
                           )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {bukuJudul}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {format(new Date(peminjaman.tanggalPinjam), 'dd/MM/yyyy')}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        <div className="flex items-center gap-2">
-                          <Calendar size={16} />
-                          {format(new Date(tanggalKembali), 'dd/MM/yyyy')}
-                          {isLate(tanggalKembali) &&
-                            (status === 'DIPINJAM' || status.includes('DIPINJAM')) && (
-                              <Badge variant="danger">Terlambat</Badge>
-                            )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {peminjaman.tanggalKembali
-                          ? format(new Date(peminjaman.tanggalKembali), 'dd/MM/yyyy')
-                          : '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <Badge variant={getStatusVariant(status)}>
-                          {status}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {peminjaman.denda ? `Rp ${peminjaman.denda.toLocaleString()}` : '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {(status === 'PENDING' || status === 'MENUNGGU_PERSETUJUAN') && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleApproveReturn(peminjaman)}
-                            disabled={approvingPeminjamanId === peminjaman.id}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            {approvingPeminjamanId === peminjaman.id ? (
-                              'Memproses...'
-                            ) : (
-                              <>
-                                <CheckCircleIcon size={16} className="mr-1" />
-                                Approve
-                              </>
-                            )}
-                          </Button>
-                        )}
-                        {status !== 'PENDING' && status !== 'MENUNGGU_PERSETUJUAN' && (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <div className="flex items-center gap-2">
+                            <Calendar size={16} />
+                            {format(new Date(tanggalKembali), 'dd/MM/yyyy')}
+                            {isLate(tanggalKembali) &&
+                              (status === 'DIPINJAM' ||
+                                status.includes('DIPINJAM')) && (
+                                <Badge variant="danger">Terlambat</Badge>
+                              )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {peminjaman.tanggalKembali
+                            ? format(
+                                new Date(peminjaman.tanggalKembali),
+                                'dd/MM/yyyy'
+                              )
+                            : '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <Badge variant={getStatusVariant(status)}>
+                            {status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {peminjaman.denda
+                            ? `Rp ${peminjaman.denda.toLocaleString()}`
+                            : '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {status === 'PENDING' && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleApproveReturn(peminjaman)}
+                              disabled={approvingPeminjamanId === peminjaman.id}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              {approvingPeminjamanId === peminjaman.id ? (
+                                'Memproses...'
+                              ) : (
+                                <>
+                                  <CheckCircleIcon size={16} className="mr-1" />
+                                  Approve
+                                </>
+                              )}
+                            </Button>
+                          )}
+                          {status !== 'PENDING' && (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                      </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
+                    <td
+                      colSpan={10}
+                      className="px-4 py-8 text-center text-gray-500"
+                    >
                       No peminjaman found
                     </td>
                   </tr>
@@ -621,36 +669,48 @@ export default function AdminPeminjamanPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {(() => {
             // Extract data from backend response or nested object
-            const mahasiswaNama = selectedPeminjaman?.nama && selectedPeminjaman.nama.trim() !== ''
-              ? selectedPeminjaman.nama
-              : (selectedPeminjaman?.mahasiswa?.nama && selectedPeminjaman.mahasiswa.nama.trim() !== ''
+            const mahasiswaNama =
+              selectedPeminjaman?.nama && selectedPeminjaman.nama.trim() !== ''
+                ? selectedPeminjaman.nama
+                : selectedPeminjaman?.mahasiswa?.nama &&
+                  selectedPeminjaman.mahasiswa.nama.trim() !== ''
                 ? selectedPeminjaman.mahasiswa.nama
-                : '-');
-            const mahasiswaNim = selectedPeminjaman?.nim && selectedPeminjaman.nim.trim() !== ''
-              ? selectedPeminjaman.nim
-              : (selectedPeminjaman?.mahasiswa?.nim && selectedPeminjaman.mahasiswa.nim.trim() !== ''
+                : '-';
+            const mahasiswaNim =
+              selectedPeminjaman?.nim && selectedPeminjaman.nim.trim() !== ''
+                ? selectedPeminjaman.nim
+                : selectedPeminjaman?.mahasiswa?.nim &&
+                  selectedPeminjaman.mahasiswa.nim.trim() !== ''
                 ? selectedPeminjaman.mahasiswa.nim
-                : '');
-            const bukuJudul = selectedPeminjaman?.judulBuku && selectedPeminjaman.judulBuku.trim() !== ''
-              ? selectedPeminjaman.judulBuku
-              : (selectedPeminjaman?.buku?.judulBuku && selectedPeminjaman.buku.judulBuku.trim() !== ''
+                : '';
+            const bukuJudul =
+              selectedPeminjaman?.judulBuku &&
+              selectedPeminjaman.judulBuku.trim() !== ''
+                ? selectedPeminjaman.judulBuku
+                : selectedPeminjaman?.buku?.judulBuku &&
+                  selectedPeminjaman.buku.judulBuku.trim() !== ''
                 ? selectedPeminjaman.buku.judulBuku
-                : (selectedPeminjaman?.buku?.judul && selectedPeminjaman.buku.judul.trim() !== ''
-                  ? selectedPeminjaman.buku.judul
-                  : '-'));
+                : selectedPeminjaman?.buku?.judul &&
+                  selectedPeminjaman.buku.judul.trim() !== ''
+                ? selectedPeminjaman.buku.judul
+                : '-';
 
             return (
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
                 <p className="text-sm font-medium text-gray-700">
-                  Mahasiswa: {mahasiswaNama}{mahasiswaNim && mahasiswaNim !== '-' ? ` (${mahasiswaNim})` : ''}
+                  Mahasiswa: {mahasiswaNama}
+                  {mahasiswaNim && mahasiswaNim !== '-'
+                    ? ` (${mahasiswaNim})`
+                    : ''}
                 </p>
-                <p className="text-sm text-gray-600">
-                  Buku: {bukuJudul}
-                </p>
+                <p className="text-sm text-gray-600">Buku: {bukuJudul}</p>
                 <p className="text-sm text-gray-600">
                   Tanggal Pinjam:{' '}
                   {selectedPeminjaman &&
-                    format(new Date(selectedPeminjaman.tanggalPinjam), 'dd/MM/yyyy')}
+                    format(
+                      new Date(selectedPeminjaman.tanggalPinjam),
+                      'dd/MM/yyyy'
+                    )}
                 </p>
               </div>
             );
@@ -660,14 +720,16 @@ export default function AdminPeminjamanPage() {
             label="Status"
             value={formData.status}
             onChange={(e) =>
-              setFormData({ ...formData, status: e.target.value as any })
+              setFormData({
+                ...formData,
+                status: e.target.value as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN'
+              })
             }
             options={[
               { value: 'DIPINJAM', label: 'Dipinjam' },
-              { value: 'DIKEMBALIKAN', label: 'Dikembalikan' },
-              { value: 'TERLAMBAT', label: 'Terlambat' },
-              { value: 'DENDA', label: 'Denda' },
-              { value: 'MENUNGGU_PERSETUJUAN', label: 'Menunggu Persetujuan' },
+              { value: 'SUDAH_DIKEMBALIKAN', label: 'Sudah Dikembalikan' },
+              { value: 'DENDA', label: 'Terlambat' },
+              { value: 'PENDING', label: 'Pending' },
             ]}
             required
           />
@@ -696,7 +758,10 @@ export default function AdminPeminjamanPage() {
             value={formData.denda || ''}
             onChange={(e) => {
               const value = e.target.value;
-              setFormData({ ...formData, denda: value === '' ? undefined : parseInt(value) });
+              setFormData({
+                ...formData,
+                denda: value === '' ? undefined : parseInt(value),
+              });
             }}
             min="0"
             placeholder="Masukkan denda (kosongkan jika tidak ada)"
@@ -710,7 +775,9 @@ export default function AdminPeminjamanPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               rows={3}
               value={formData.catatan}
-              onChange={(e) => setFormData({ ...formData, catatan: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, catatan: e.target.value })
+              }
               placeholder="Catatan tambahan (opsional)"
             />
           </div>
