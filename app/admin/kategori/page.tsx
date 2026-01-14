@@ -96,7 +96,6 @@ export default function AdminKategoriPage() {
       handleCloseModal();
       fetchKategoriList();
     } catch (error) {
-      console.error('Error submitting form:', error);
     }
   };
 

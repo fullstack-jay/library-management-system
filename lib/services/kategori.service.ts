@@ -32,7 +32,6 @@ export const kategoriService = {
         return response.data.data;
       }
     } catch (error) {
-      console.error('Error fetching user kategori:', error);
     }
 
     return [];
@@ -62,7 +61,6 @@ export const kategoriService = {
         return response.data.data.content || [];
       }
     } catch (error) {
-      console.error('Error fetching all kategori:', error);
     }
 
     return [];

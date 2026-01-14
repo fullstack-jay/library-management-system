@@ -15,6 +15,7 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
+  Calendar,
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -476,41 +477,28 @@ export default function AdminDashboardPage() {
                   Status
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Tenggat Pengembalian
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Denda
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Total Keterlambatan
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {recentPeminjaman && recentPeminjaman.length > 0 ? (
                 recentPeminjaman.map((peminjaman, index) => {
-                  // Extract data with flexible fallback
-                  // Backend response has: no, namaMahasiswa, nim, judulBuku, statusBukuPinjaman
+                  // Extract data from backend response
                   const no = peminjaman.no ?? index + 1;
-                  const mahasiswaNama =
-                    peminjaman.namaMahasiswa &&
-                    peminjaman.namaMahasiswa.trim() !== ''
-                      ? peminjaman.namaMahasiswa
-                      : peminjaman.nama && peminjaman.nama.trim() !== ''
-                      ? peminjaman.nama
-                      : peminjaman.mahasiswa?.nama &&
-                        peminjaman.mahasiswa.nama.trim() !== ''
-                      ? peminjaman.mahasiswa.nama
-                      : '-';
+                  const mahasiswaNama = peminjaman.nama || '-';
                   const mahasiswaNim = peminjaman.nim || '-';
-                  const bukuJudul =
-                    peminjaman.judulBuku && peminjaman.judulBuku.trim() !== ''
-                      ? peminjaman.judulBuku
-                      : peminjaman.buku?.judulBuku &&
-                        peminjaman.buku.judulBuku.trim() !== ''
-                      ? peminjaman.buku.judulBuku
-                      : peminjaman.buku?.judul &&
-                        peminjaman.buku.judul.trim() !== ''
-                      ? peminjaman.buku.judul
-                      : '-';
-                  const status =
-                    peminjaman.statusBukuPinjaman ||
-                    peminjaman.status ||
-                    'DIPINJAM';
+                  const bukuJudul = peminjaman.judulBuku || '-';
+                  const status = peminjaman.statusBukuPinjaman || 'DIPINJAM';
+
+                  // Ambil total keterlambatan dari backend response
+                  const totalKeterlambatan = peminjaman.totalKeterlambatan || 0;
 
                   const getStatusVariant = (status: string) => {
                     switch (status) {
@@ -540,16 +528,22 @@ export default function AdminDashboardPage() {
                         {bukuJudul}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
-                        {new Date(peminjaman.tanggalPinjam).toLocaleDateString(
-                          'id-ID'
-                        )}
+                        <div className="flex items-center gap-2">
+                          <Calendar size={16} />
+                          {new Date(
+                            peminjaman.tanggalPinjam
+                          ).toLocaleDateString('id-ID')}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
-                        {peminjaman.tanggalKembali
-                          ? new Date(peminjaman.tanggalKembali).toLocaleDateString(
-                              'id-ID'
-                            )
-                          : '-'}
+                        <div className="flex items-center gap-2">
+                          <Calendar size={16} />
+                          {peminjaman.tanggalKembali
+                            ? new Date(
+                                peminjaman.tanggalKembali
+                              ).toLocaleDateString('id-ID')
+                            : '-'}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <Badge variant={getStatusVariant(status)}>
@@ -557,10 +551,29 @@ export default function AdminDashboardPage() {
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
+                        <div className="flex items-center gap-2">
+                          <Calendar size={16} />
+                          {peminjaman.tanggalTenggat
+                            ? new Date(
+                                peminjaman.tanggalTenggat
+                              ).toLocaleDateString('id-ID')
+                            : '-'}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
                         {peminjaman.denda !== undefined &&
                         peminjaman.denda !== null
                           ? `Rp ${peminjaman.denda.toLocaleString('id-ID')}`
                           : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {totalKeterlambatan > 0 ? (
+                          <Badge variant="danger">
+                            {totalKeterlambatan} Hari
+                          </Badge>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -568,7 +581,7 @@ export default function AdminDashboardPage() {
               ) : (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={10}
                     className="px-4 py-8 text-center text-gray-500"
                   >
                     No recent peminjaman found

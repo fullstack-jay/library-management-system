@@ -108,7 +108,6 @@ export default function UserProfilePage() {
 
         // Extract data from response
         const userData = profileResponse.data || profileResponse;
-        console.log('User profile response:', userData);
 
         const finalFotoUrl =
           userData.fotoUrl || userData.fotoProfile || userData.foto || '';
@@ -145,7 +144,6 @@ export default function UserProfilePage() {
           password: userData.password || '',
         });
       } catch (error: any) {
-        console.error('Error fetching user profile:', error);
         // Fallback ke data dari auth context
         if (user) {
           setProfileData({
@@ -281,19 +279,6 @@ export default function UserProfilePage() {
     setIsLoading(true);
 
     try {
-      console.log('Updating user profile with data:', {
-        id: profileData.id,
-        nama: formData.nama,
-        username: profileData.username,
-        email: formData.email,
-        password: formData.password || profileData.password,
-        status: profileData.status,
-        role: profileData.role,
-        nim: formData.nim,
-        notelepon: formData.notelepon,
-        jurusan: formData.jurusan,
-        alamat: formData.alamat,
-      });
       await api.updateUserProfile({
         id: profileData.id,
         nama: formData.nama,

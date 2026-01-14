@@ -5,12 +5,7 @@ import type {
   StatusBuku,
 } from './enums';
 
-export type {
-  UserRole,
-  StatusMahasiswa,
-  StatusBukuPinjaman,
-  StatusBuku,
-};
+export type { UserRole, StatusMahasiswa, StatusBukuPinjaman, StatusBuku };
 
 /* =========================
    USER
@@ -178,6 +173,7 @@ export interface Mahasiswa {
 
   email?: string;
   username?: string;
+  role?: string; // Role from backend response (root level)
 
   status: StatusMahasiswa;
   user?: User;
@@ -232,8 +228,8 @@ export interface PeminjamanBuku {
   tanggalPinjam: string;
   tanggalKembali?: string;
   tanggalHarusKembali?: string;
+  tanggalTenggat?: string; // Tenggat tanggal dari backend
 
-  // 🔥 SESUAI StatusBukuPinjaman.java
   statusBukuPinjaman?: StatusBukuPinjaman;
 
   // backward compatibility
@@ -241,6 +237,7 @@ export interface PeminjamanBuku {
 
   denda?: number;
   catatan?: string;
+  totalKeterlambatan?: number; // Total hari keterlambatan dari backend
 
   createdAt?: string;
   updatedAt?: string;

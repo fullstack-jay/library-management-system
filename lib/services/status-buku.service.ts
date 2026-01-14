@@ -10,15 +10,22 @@ import { BukuStatusResponse, ApiResponse } from '@/types';
 export const statusBukuService = {
   /**
    * Get status buku
-   * GET /api/user/status-buku/:bukuId
+   * POST /api/user/status-buku/{id}
    */
   async getStatusBuku(bukuId: string): Promise<BukuStatusResponse> {
-
     try {
-      const response = await apiClient.get<ApiResponse<BukuStatusResponse>>(
+      if (
+        !bukuId ||
+        bukuId === '' ||
+        bukuId === 'undefined' ||
+        bukuId === 'null'
+      ) {
+        throw new Error('Invalid bukuId');
+      }
+
+      const response = await apiClient.post<ApiResponse<BukuStatusResponse>>(
         `/user/status-buku/${bukuId}`
       );
-
 
       // Handle ApiResponse wrapper
       if (response.status === 200 && response.data && response.data.data) {
@@ -34,7 +41,6 @@ export const statusBukuService = {
         };
       }
     } catch (error: any) {
-
       // Return default values on error
       return {
         bukuId: 0,

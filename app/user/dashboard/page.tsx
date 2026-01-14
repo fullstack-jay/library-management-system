@@ -43,15 +43,15 @@ export default function UserDashboardPage() {
   };
 
   const activePeminjaman = peminjamanList.filter((p) => {
-    const status = (p.statusBukuPinjaman || p.status || '').toUpperCase();
-    return status.includes('DIPINJAM') || status.includes('PINJAM');
+    const status = p.statusBukuPinjaman || p.status || 'DIPINJAM';
+    return status === 'DIPINJAM' || status === 'DENDA';
   });
 
   const overduePeminjaman = peminjamanList.filter((p) => {
     const tanggalKembali = p.tanggalKembali || p.tanggalHarusKembali || '';
-    const status = (p.statusBukuPinjaman || p.status || '').toUpperCase();
+    const status = p.statusBukuPinjaman || p.status || 'DIPINJAM';
     const isOverdue = new Date(tanggalKembali) < new Date();
-    return isOverdue && (status.includes('DIPINJAM') || status.includes('PINJAM'));
+    return isOverdue && (status === 'DIPINJAM' || status === 'DENDA');
   });
 
   const isLate = (tanggalHarusKembali: string) => {
@@ -173,28 +173,24 @@ export default function UserDashboardPage() {
         ) : activePeminjaman.length > 0 ? (
           <div className="space-y-4">
             {activePeminjaman.map((peminjaman) => {
-              // Get data from backend response or nested object
-              const judulBuku = peminjaman.judulBuku && peminjaman.judulBuku.trim() !== ''
-                ? peminjaman.judulBuku
-                : (peminjaman.buku?.judulBuku && peminjaman.buku.judulBuku.trim() !== ''
-                  ? peminjaman.buku.judulBuku
-                  : (peminjaman.buku?.judul && peminjaman.buku.judul.trim() !== ''
-                    ? peminjaman.buku.judul
-                    : 'Judul tidak tersedia'));
-              const penulis = peminjaman.penulis && peminjaman.penulis.trim() !== ''
-                ? peminjaman.penulis
-                : (peminjaman.buku?.penulis && peminjaman.buku.penulis.trim() !== ''
-                  ? peminjaman.buku.penulis
-                  : (peminjaman.buku?.pengarang && peminjaman.buku.pengarang.trim() !== ''
-                    ? peminjaman.buku.pengarang
-                    : 'Penulis tidak tersedia'));
+              const judulBuku = peminjaman.judulBuku || 'Judul tidak tersedia';
+              const penulis = peminjaman.penulis || 'Penulis tidak tersedia';
               const tanggalKembali = peminjaman.tanggalKembali || peminjaman.tanggalHarusKembali || '';
+              const status = peminjaman.statusBukuPinjaman || peminjaman.status || 'DIPINJAM';
+
+              const getStatusVariant = (status: string) => {
+                if (status === 'DENDA') return 'danger';
+                if (status === 'DIPINJAM') return 'info';
+                return 'warning';
+              };
 
               return (
                 <div
                   key={peminjaman.id}
                   className={`border rounded-lg p-4 ${
-                    isLate(tanggalKembali) ? 'border-red-300 bg-red-50' : ''
+                    status === 'DENDA' || isLate(tanggalKembali)
+                      ? 'border-red-300 bg-red-50'
+                      : ''
                   }`}
                 >
                   <div className="flex justify-between items-start mb-2">
@@ -206,14 +202,19 @@ export default function UserDashboardPage() {
                         {penulis}
                       </p>
                     </div>
-                    {isLate(tanggalKembali) && (
-                      <div className="flex items-center gap-1">
-                        <Badge variant="danger">
-                          <AlertCircle size={14} />
-                        </Badge>
-                        <span className="text-red-600 text-sm font-medium">Terlambat</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <Badge variant={getStatusVariant(status)}>
+                        {status}
+                      </Badge>
+                      {isLate(tanggalKembali) && status !== 'DENDA' && (
+                        <div className="flex items-center gap-1">
+                          <Badge variant="danger">
+                            <AlertCircle size={14} />
+                          </Badge>
+                          <span className="text-red-600 text-sm font-medium">Terlambat</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-gray-600">
                     <div>

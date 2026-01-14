@@ -50,10 +50,6 @@ export const peminjamanService = {
       response.data.success &&
       response.data.data
     ) {
-      console.log(
-        '✅ Admin Peminjaman found:',
-        response.data.data.content?.length || 0
-      );
       return response.data.data;
     } else {
       // Return empty paginated response if error

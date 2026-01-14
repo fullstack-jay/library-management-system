@@ -102,8 +102,8 @@ export default function AdminMahasiswaPage() {
         jurusan: mahasiswa.jurusan,
         alamat: mahasiswa.alamat,
         phoneNumber: mahasiswa.phoneNumber,
-        email: mahasiswa.email || mahasiswa.user?.email || '',
-        username: mahasiswa.username || mahasiswa.user?.username || '',
+        email: mahasiswa.email || '',
+        username: mahasiswa.username || '',
         password: '', // Password kosong saat edit untuk keamanan
         status: mahasiswa.status,
       });
@@ -480,7 +480,7 @@ export default function AdminMahasiswaPage() {
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <Badge variant="info">
-                          {(mahasiswa.user?.role || '-').toUpperCase()}
+                          {(mahasiswa.role || '-').toUpperCase()}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-sm">
@@ -703,9 +703,7 @@ export default function AdminMahasiswaPage() {
                   Email
                 </label>
                 <p className="text-gray-900 font-semibold">
-                  {selectedMahasiswa.email ||
-                    selectedMahasiswa.user?.email ||
-                    '-'}
+                  {selectedMahasiswa.email || '-'}
                 </p>
               </div>
               <div>
@@ -713,9 +711,7 @@ export default function AdminMahasiswaPage() {
                   Username
                 </label>
                 <p className="text-gray-900 font-semibold">
-                  {selectedMahasiswa.username ||
-                    selectedMahasiswa.user?.username ||
-                    '-'}
+                  {selectedMahasiswa.username || '-'}
                 </p>
               </div>
               <div>
@@ -723,7 +719,7 @@ export default function AdminMahasiswaPage() {
                   Role
                 </label>
                 <p className="text-gray-900 font-semibold">
-                  {(selectedMahasiswa.user?.role || '-').toUpperCase()}
+                  {(selectedMahasiswa.role || '-').toUpperCase()}
                 </p>
               </div>
               <div>

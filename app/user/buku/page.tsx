@@ -6,12 +6,11 @@ import Swal from 'sweetalert2';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
-import { Select } from '@/components/Select';
 import { Pagination } from '@/components/Pagination';
 import { Badge } from '@/components/Badge';
 import { Modal } from '@/components/Modal';
 import { api } from '@/lib/api';
-import { Buku, KategoriBuku, BukuStatusResponse } from '@/types';
+import { Buku, BukuStatusResponse } from '@/types';
 import { BukuFilterRequest } from '@/lib/viewmodels/requests/BukuRequest';
 import { CreatePeminjamanRequest } from '@/lib/viewmodels/requests/PeminjamanRequest';
 import {
@@ -26,10 +25,8 @@ import {
 export default function UserBukuPage() {
   const router = useRouter();
   const [bukuList, setBukuList] = useState<Buku[]>([]);
-  const [kategoriList, setKategoriList] = useState<KategoriBuku[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedKategori, setSelectedKategori] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [selectedBuku, setSelectedBuku] = useState<Buku | null>(null);
@@ -51,8 +48,7 @@ export default function UserBukuPage() {
 
   useEffect(() => {
     fetchBukuList();
-    fetchKategoriList();
-  }, [currentPage, searchTerm, selectedKategori]);
+  }, [currentPage, searchTerm]);
 
   const fetchBukuList = async () => {
     try {
@@ -61,7 +57,6 @@ export default function UserBukuPage() {
         pageNumber: currentPage + 1, // Backend 1-based
         pageSize: 10, // Changed from 12 to 10 items per page
         search: searchTerm || undefined,
-        kategoriId: selectedKategori || undefined,
       };
       const response = await api.getAllBukuUser(filter);
       setBukuList(response.content || []);
@@ -71,14 +66,6 @@ export default function UserBukuPage() {
       setTotalPages(0);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const fetchKategoriList = async () => {
-    try {
-      const response = await api.getAllKategoriUser();
-      setKategoriList(response);
-    } catch (error) {
     }
   };
 
@@ -120,11 +107,6 @@ export default function UserBukuPage() {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
       const user = localStorage.getItem('user');
-      console.log({
-        hasToken: !!token,
-        tokenValid: token && token !== 'undefined' && token !== 'null',
-        hasUser: !!user,
-      });
 
       if (!token || token === 'undefined' || token === 'null') {
         Swal.fire({
@@ -161,15 +143,6 @@ export default function UserBukuPage() {
         statusBukuPinjaman: 'DIPINJAM',
         denda: 0,
       } as CreatePeminjamanRequest;
-      console.log({
-        bukuId: bukuId,
-        bukuIdType: typeof bukuId,
-        judul: selectedBuku.judulBuku,
-        tanggalPinjam: formatDate(tanggalPinjam), // Hari ini
-        tanggalKembali: formatDate(tanggalKembali), // 7 hari dari sekarang
-        requestData,
-      });
-
 
       await api.createPeminjaman(requestData);
 
@@ -264,38 +237,18 @@ export default function UserBukuPage() {
 
       {/* Search and Filter */}
       <Card>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <form onSubmit={handleSearch} className="md:col-span-2 flex gap-4">
-            <Input
-              placeholder="Cari judul, pengarang, atau ISBN..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1"
-            />
-            <Button type="submit">
-              <Search size={20} className="mr-2" />
-              Cari
-            </Button>
-          </form>
-
-          <Select
-            value={selectedKategori}
-            onChange={(e) => {
-              setSelectedKategori(e.target.value);
-              setCurrentPage(0);
-            }}
-            options={[
-              { value: '', label: 'Semua Kategori' },
-              ...kategoriList.map((k) => ({ value: k.id, label: k.nama })),
-            ]}
-            disabled={kategoriList.length === 0}
+        <form onSubmit={handleSearch} className="flex gap-4">
+          <Input
+            placeholder="Cari judul, pengarang, atau ISBN..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1"
           />
-          {kategoriList.length === 0 && (
-            <p className="text-xs text-gray-500 mt-1">
-              Kategori tidak tersedia
-            </p>
-          )}
-        </div>
+          <Button type="submit">
+            <Search size={20} className="mr-2" />
+            Cari
+          </Button>
+        </form>
       </Card>
 
       {/* Buku Grid */}
@@ -361,12 +314,10 @@ export default function UserBukuPage() {
                       size="sm"
                       onClick={() => handleViewDetails(buku)}
                       disabled={
-                        buku.statusBuku?.statusBuku !== 'TERSEDIA' ||
-                        buku.jumlahSalinan === 0
+                        buku.statusBuku?.statusBuku !== 'TERSEDIA'
                       }
                     >
-                      {buku.statusBuku?.statusBuku !== 'TERSEDIA' ||
-                      buku.jumlahSalinan === 0
+                      {buku.statusBuku?.statusBuku !== 'TERSEDIA'
                         ? 'Tidak Tersedia'
                         : 'Lihat Detail'}
                     </Button>
@@ -473,8 +424,8 @@ export default function UserBukuPage() {
                 onClick={handlePinjamBuku}
                 disabled={
                   isPinning ||
-                  (statusBuku && statusBuku.stokTersedia === 0) ||
-                  (selectedBuku && selectedBuku.jumlahSalinan === 0)
+                  !statusBuku ||
+                  statusBuku.stokTersedia === 0
                 }
               >
                 {isPinning ? 'Memproses...' : 'Pinjam Buku'}

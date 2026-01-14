@@ -11,10 +11,9 @@ import { Pagination } from '@/components/Pagination';
 import { Badge } from '@/components/Badge';
 import { Dropdown } from '@/components/Dropdown';
 import { api } from '@/lib/api';
-import { PeminjamanBuku, UpdatePeminjamanRequest, StatusBukuPinjaman } from '@/types';
+import { PeminjamanBuku, UpdatePeminjamanRequest } from '@/types';
 import {
   Calendar,
-  Filter,
   Search,
   MoreVertical,
   Eye,
@@ -38,8 +37,8 @@ export default function AdminPeminjamanPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [formData, setFormData] = useState<UpdatePeminjamanRequest>({
-    status: 'DIPINJAM' as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN',
-    statusBukuPinjaman: 'DIPINJAM' as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN',
+    status: 'DIPINJAM',
+    statusBukuPinjaman: 'DIPINJAM',
     tanggalKembali: new Date().toISOString().split('T')[0],
     denda: undefined,
     catatan: '',
@@ -91,13 +90,17 @@ export default function AdminPeminjamanPage() {
   const handleOpenModal = (peminjaman: PeminjamanBuku) => {
     setSelectedPeminjaman(peminjaman);
 
-    // Use statusBukuPinjaman or fallback to status, ensure it's a valid status type
-    const rawStatus = peminjaman.statusBukuPinjaman || peminjaman.status || 'DIPINJAM';
-    const status = rawStatus as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN';
+    // Use statusBukuPinjaman or fallback to status
+    const status =
+      peminjaman.statusBukuPinjaman || peminjaman.status || 'DIPINJAM';
 
     setFormData({
-      status: status,
-      statusBukuPinjaman: status,
+      status: status as any,
+      statusBukuPinjaman: status as
+        | 'DIPINJAM'
+        | 'SUDAH_DIKEMBALIKAN'
+        | 'DENDA'
+        | 'PENDING',
       tanggalKembali: peminjaman.tanggalKembali
         ? new Date(peminjaman.tanggalKembali).toISOString().split('T')[0]
         : new Date().toISOString().split('T')[0],
@@ -114,20 +117,20 @@ export default function AdminPeminjamanPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const selectedId = selectedPeminjaman?.id;
-    if (!selectedPeminjaman || !selectedId) return;
+    if (!selectedPeminjaman || !selectedPeminjaman.id) return;
 
     try {
-      // Ensure all required fields have values before sending to backend
-      const submitData: UpdatePeminjamanRequest = {
+      // Convert undefined denda to 0 for backend
+      // Send both status and statusBukuPinjaman to ensure backend accepts it
+      const submitData = {
         tanggalKembali: formData.tanggalKembali,
-        status: formData.status || ('DIPINJAM' as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN'),
-        statusBukuPinjaman: formData.statusBukuPinjaman || ('DIPINJAM' as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN'),
+        status: formData.status,
+        statusBukuPinjaman: formData.status, // Backend expects statusBukuPinjaman
         denda: formData.denda ?? 0,
-        catatan: formData.catatan || '',
+        catatan: formData.catatan,
       };
 
-      await api.updatePeminjamanAdmin(selectedId, submitData);
+      await api.updatePeminjamanAdmin(selectedPeminjaman.id, submitData);
       handleCloseModal();
       fetchPeminjamanList();
 
@@ -151,8 +154,8 @@ export default function AdminPeminjamanPage() {
   const handleReturnBook = async (peminjaman: PeminjamanBuku) => {
     setSelectedPeminjaman(peminjaman);
     setFormData({
-      status: 'SUDAH_DIKEMBALIKAN' as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN',
-      statusBukuPinjaman: 'SUDAH_DIKEMBALIKAN' as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN',
+      status: 'SUDAH_DIKEMBALIKAN',
+      statusBukuPinjaman: 'SUDAH_DIKEMBALIKAN',
       tanggalKembali: new Date().toISOString().split('T')[0],
       denda: undefined,
       catatan: '',
@@ -169,28 +172,26 @@ export default function AdminPeminjamanPage() {
   const handleEdit = (peminjaman: PeminjamanBuku) => {
     setSelectedPeminjaman(peminjaman);
 
-    // Use statusBukuPinjaman or fallback to status, ensure it's a valid status type
-    const rawStatus = peminjaman.statusBukuPinjaman || peminjaman.status || 'DIPINJAM';
-    const status = rawStatus as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN';
+    // Use statusBukuPinjaman or fallback to status
+    const statusBukuPinjaman =
+      peminjaman.statusBukuPinjaman ?? peminjaman.status ?? 'DIPINJAM';
 
     setFormData({
-      status: status,
-      statusBukuPinjaman: status,
+      status: statusBukuPinjaman,
+      statusBukuPinjaman: statusBukuPinjaman,
       tanggalKembali: peminjaman.tanggalKembali
         ? new Date(peminjaman.tanggalKembali).toISOString().split('T')[0]
         : new Date().toISOString().split('T')[0],
-      denda: peminjaman.denda || undefined,
-      catatan: peminjaman.catatan || '',
+      denda: peminjaman.denda ?? undefined,
+      catatan: peminjaman.catatan ?? '',
     });
     setIsModalOpen(true);
   };
 
   const handleDelete = async (peminjaman: PeminjamanBuku) => {
-    const peminjamanId = peminjaman.id;
-    if (!peminjamanId) return;
+    if (!peminjaman.id) return;
 
-    const bukuJudul =
-      peminjaman.judulBuku || peminjaman.buku?.judulBuku || 'ini';
+    const bukuJudul = peminjaman.judulBuku || 'Judul tidak tersedia';
 
     Swal.fire({
       title: 'Hapus Peminjaman?',
@@ -204,7 +205,10 @@ export default function AdminPeminjamanPage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await api.deletePeminjaman(peminjamanId);
+          if (!peminjaman.id) {
+            throw new Error('ID peminjaman tidak ditemukan');
+          }
+          await api.deletePeminjaman(peminjaman.id);
           Swal.fire({
             icon: 'success',
             title: 'Terhapus!',
@@ -226,16 +230,12 @@ export default function AdminPeminjamanPage() {
   };
 
   const handleApproveReturn = async (peminjaman: PeminjamanBuku) => {
-    const peminjamanId = peminjaman.id;
-    if (!peminjamanId) return;
+    if (!peminjaman.id) return;
 
-    const bukuJudul =
-      peminjaman.judulBuku || peminjaman.buku?.judulBuku || 'ini';
-    const mahasiswaNama =
-      peminjaman.nama ||
-      peminjaman.mahasiswa?.nama ||
-      '-';
-    const mahasiswaNim = peminjaman.nim || peminjaman.mahasiswa?.nim || '';
+    const bukuJudul = peminjaman.judulBuku || '-';
+
+    const mahasiswaNama = peminjaman.nama || '-';
+    const mahasiswaNim = peminjaman.nim || '';
 
     // Show confirmation dialog
     Swal.fire({
@@ -252,8 +252,11 @@ export default function AdminPeminjamanPage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          setApprovingPeminjamanId(peminjamanId);
-          await api.approveReturn(peminjamanId);
+          if (!peminjaman.id) {
+            throw new Error('ID peminjaman tidak ditemukan');
+          }
+          setApprovingPeminjamanId(peminjaman.id || null);
+          await api.approveReturn(peminjaman.id);
           Swal.fire({
             icon: 'success',
             title: 'Berhasil Disetujui!',
@@ -348,8 +351,8 @@ export default function AdminPeminjamanPage() {
                   { value: '', label: 'Semua Status' },
                   { value: 'DIPINJAM', label: 'Dipinjam' },
                   { value: 'SUDAH_DIKEMBALIKAN', label: 'Sudah Dikembalikan' },
-                  { value: 'DENDA', label: 'Terlambat' },
                   { value: 'PENDING', label: 'Pending' },
+                  { value: 'DENDA', label: 'Denda' },
                 ]}
               />
             </div>
@@ -452,39 +455,12 @@ export default function AdminPeminjamanPage() {
               <tbody className="divide-y divide-gray-200">
                 {peminjamanList.length > 0 ? (
                   peminjamanList.map((peminjaman, index) => {
-                    // Get data from backend response or nested object
-                    const mahasiswaNama =
-                      peminjaman.nama && peminjaman.nama.trim() !== ''
-                        ? peminjaman.nama
-                        : peminjaman.mahasiswa?.nama &&
-                          peminjaman.mahasiswa.nama.trim() !== ''
-                        ? peminjaman.mahasiswa.nama
-                        : '-';
-                    const mahasiswaNim =
-                      peminjaman.nim && peminjaman.nim.trim() !== ''
-                        ? peminjaman.nim
-                        : peminjaman.mahasiswa?.nim &&
-                          peminjaman.mahasiswa.nim.trim() !== ''
-                        ? peminjaman.mahasiswa.nim
-                        : '-';
-                    const bukuJudul =
-                      peminjaman.judulBuku && peminjaman.judulBuku.trim() !== ''
-                        ? peminjaman.judulBuku
-                        : peminjaman.buku?.judulBuku &&
-                          peminjaman.buku.judulBuku.trim() !== ''
-                        ? peminjaman.buku.judulBuku
-                        : peminjaman.buku?.judul &&
-                          peminjaman.buku.judul.trim() !== ''
-                        ? peminjaman.buku.judul
-                        : '-';
-                    const tanggalKembali =
-                      peminjaman.tanggalKembali ||
-                      peminjaman.tanggalHarusKembali ||
-                      '';
-                    const status =
-                      peminjaman.statusBukuPinjaman ||
-                      peminjaman.status ||
-                      'DIPINJAM';
+                    // Get data from backend response
+                    const mahasiswaNama = peminjaman.nama || '-';
+                    const mahasiswaNim = peminjaman.nim || '-';
+                    const bukuJudul = peminjaman.judulBuku || '-';
+                    const tanggalKembali = peminjaman.tanggalKembali || '';
+                    const status = peminjaman.statusBukuPinjaman || 'DIPINJAM';
 
                     // Calculate row number based on sort order and current data count
                     // ASC (Menaik): 1, 2, 3... | DESC (Menurun): 3, 2, 1 (if 3 items)
@@ -497,8 +473,7 @@ export default function AdminPeminjamanPage() {
                       <tr
                         key={peminjaman.id}
                         className={`hover:bg-gray-50 ${
-                          isLate(tanggalKembali) &&
-                          (status === 'DIPINJAM' || status.includes('DIPINJAM'))
+                          isLate(tanggalKembali) && status === 'DIPINJAM'
                             ? 'bg-red-50'
                             : ''
                         }`}
@@ -524,8 +499,7 @@ export default function AdminPeminjamanPage() {
                                 onClick: () => handleEdit(peminjaman),
                                 icon: <Pencil size={16} />,
                               },
-                              ...(status === 'DIPINJAM' ||
-                              status.includes('DIPINJAM')
+                              ...(status === 'DIPINJAM'
                                 ? [
                                     {
                                       label: 'Kembalikan',
@@ -568,8 +542,7 @@ export default function AdminPeminjamanPage() {
                             <Calendar size={16} />
                             {format(new Date(tanggalKembali), 'dd/MM/yyyy')}
                             {isLate(tanggalKembali) &&
-                              (status === 'DIPINJAM' ||
-                                status.includes('DIPINJAM')) && (
+                              status === 'DIPINJAM' && (
                                 <Badge variant="danger">Terlambat</Badge>
                               )}
                           </div>
@@ -668,32 +641,10 @@ export default function AdminPeminjamanPage() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           {(() => {
-            // Extract data from backend response or nested object
-            const mahasiswaNama =
-              selectedPeminjaman?.nama && selectedPeminjaman.nama.trim() !== ''
-                ? selectedPeminjaman.nama
-                : selectedPeminjaman?.mahasiswa?.nama &&
-                  selectedPeminjaman.mahasiswa.nama.trim() !== ''
-                ? selectedPeminjaman.mahasiswa.nama
-                : '-';
-            const mahasiswaNim =
-              selectedPeminjaman?.nim && selectedPeminjaman.nim.trim() !== ''
-                ? selectedPeminjaman.nim
-                : selectedPeminjaman?.mahasiswa?.nim &&
-                  selectedPeminjaman.mahasiswa.nim.trim() !== ''
-                ? selectedPeminjaman.mahasiswa.nim
-                : '';
-            const bukuJudul =
-              selectedPeminjaman?.judulBuku &&
-              selectedPeminjaman.judulBuku.trim() !== ''
-                ? selectedPeminjaman.judulBuku
-                : selectedPeminjaman?.buku?.judulBuku &&
-                  selectedPeminjaman.buku.judulBuku.trim() !== ''
-                ? selectedPeminjaman.buku.judulBuku
-                : selectedPeminjaman?.buku?.judul &&
-                  selectedPeminjaman.buku.judul.trim() !== ''
-                ? selectedPeminjaman.buku.judul
-                : '-';
+            // Extract data from backend response
+            const mahasiswaNama = selectedPeminjaman?.nama || '-';
+            const mahasiswaNim = selectedPeminjaman?.nim || '';
+            const bukuJudul = selectedPeminjaman?.judulBuku || '-';
 
             return (
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
@@ -720,16 +671,11 @@ export default function AdminPeminjamanPage() {
             label="Status"
             value={formData.status}
             onChange={(e) =>
-              setFormData({
-                ...formData,
-                status: e.target.value as 'PENDING' | 'DIPINJAM' | 'DENDA' | 'SUDAH_DIKEMBALIKAN'
-              })
+              setFormData({ ...formData, status: e.target.value as any })
             }
             options={[
-              { value: 'DIPINJAM', label: 'Dipinjam' },
-              { value: 'SUDAH_DIKEMBALIKAN', label: 'Sudah Dikembalikan' },
-              { value: 'DENDA', label: 'Terlambat' },
-              { value: 'PENDING', label: 'Pending' },
+              { value: 'DIPINJAM', label: 'DIPINJAM' },
+              { value: 'SUDAH_DIKEMBALIKAN', label: 'SUDAH_DIKEMBALIKAN' },
             ]}
             required
           />

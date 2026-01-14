@@ -56,7 +56,7 @@ export default function AdminProfilePage() {
     // Build base URL
     const apiUrl =
       process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
-    const baseUrl = apiUrl.replace('/api', ''); // → http://localhost:8080
+    const baseUrl = apiUrl.replace('/api', '');
 
     // Jika path sudah mengandung /uploads/, gunakan langsung dengan baseUrl
     if (fotoPath.includes('/uploads/')) {
@@ -102,7 +102,6 @@ export default function AdminProfilePage() {
         setIsFetchingProfile(true);
 
         const profileData = await api.getAdminProfile();
-        console.log('Backend profile response:', profileData);
 
         const finalFotoUrl =
           profileData.fotoUrl ||
@@ -118,7 +117,6 @@ export default function AdminProfilePage() {
           fotoProfile: finalFotoUrl, // Simpan path relatif
         });
       } catch (error: any) {
-        console.error('Error fetching profile:', error);
         // Fallback ke data dari auth context
         if (user) {
           setProfileData({
@@ -239,7 +237,6 @@ export default function AdminProfilePage() {
         nama: profileData.nama,
         email: profileData.email,
       };
-      console.log('Updating profile with data:', updateData);
       await api.updateAdminProfile(updateData);
 
       Swal.fire({

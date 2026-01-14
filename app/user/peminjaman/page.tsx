@@ -50,18 +50,6 @@ export default function UserPeminjamanPage() {
         setPeminjamanList([]);
         setTotalPages(0);
       }
-
-      // Log each item for debugging
-      if (response && Array.isArray(response)) {
-        response.forEach((p: PeminjamanBuku, index: number) => {
-          console.log({
-            id: p.id,
-            judulBuku: p.judulBuku || p.buku?.judulBuku,
-            statusBukuPinjaman: p.statusBukuPinjaman || p.status,
-            tanggalPinjam: p.tanggalPinjam,
-          });
-        });
-      }
     } catch (error: any) {
       const errorMsg = error.response?.data?.message ||
                       error.response?.data?.data ||
@@ -114,6 +102,7 @@ export default function UserPeminjamanPage() {
   };
 
   const isLate = (tanggalKembali: string) => {
+    if (!tanggalKembali) return false;
     return new Date(tanggalKembali) < new Date();
   };
 
@@ -133,17 +122,15 @@ export default function UserPeminjamanPage() {
   };
 
   const activePeminjaman = peminjamanList.filter((p) => {
-    const status = (p.statusBukuPinjaman || p.status || '').toUpperCase();
-
-    // Anggap aktif jika status mengandung "DIPINJAM" atau "PINJAM"
-    return status.includes('DIPINJAM') || status.includes('PINJAM');
+    const status = p.statusBukuPinjaman || p.status || 'DIPINJAM';
+    // Anggap aktif jika status DIPINJAM atau DENDA
+    return status === 'DIPINJAM' || status === 'DENDA';
   });
 
   const completedPeminjaman = peminjamanList.filter((p) => {
-    const status = (p.statusBukuPinjaman || p.status || '').toUpperCase();
-
-    // Anggap completed jika status mengandung "KEMBALI" atau bukan "DIPINJAM"
-    return !status.includes('DIPINJAM') && !status.includes('PINJAM');
+    const status = p.statusBukuPinjaman || p.status || 'DIPINJAM';
+    // Anggap completed jika status SUDAH_DIKEMBALIKAN atau PENDING
+    return status === 'SUDAH_DIKEMBALIKAN' || status === 'PENDING';
   });
 
 
@@ -221,29 +208,17 @@ export default function UserPeminjamanPage() {
             <Card title="Peminjaman Aktif" subtitle="Buku yang sedang Anda pinjam">
               <div className="space-y-4">
                 {activePeminjaman.map((peminjaman) => {
-                  // Get judul buku dan penulis dari response backend atau nested object
-                  const judulBuku = peminjaman.judulBuku && peminjaman.judulBuku.trim() !== ''
-                    ? peminjaman.judulBuku
-                    : (peminjaman.buku?.judulBuku && peminjaman.buku.judulBuku.trim() !== ''
-                      ? peminjaman.buku.judulBuku
-                      : (peminjaman.buku?.judul && peminjaman.buku.judul.trim() !== ''
-                        ? peminjaman.buku.judul
-                        : 'Judul tidak tersedia'));
-                  const penulis = peminjaman.penulis && peminjaman.penulis.trim() !== ''
-                    ? peminjaman.penulis
-                    : (peminjaman.buku?.penulis && peminjaman.buku.penulis.trim() !== ''
-                      ? peminjaman.buku.penulis
-                      : (peminjaman.buku?.pengarang && peminjaman.buku.pengarang.trim() !== ''
-                        ? peminjaman.buku.pengarang
-                        : 'Penulis tidak tersedia'));
-                  const tanggalKembali = peminjaman.tanggalKembali || peminjaman.tanggalHarusKembali || '';
+                  const judulBuku = peminjaman.judulBuku || 'Judul tidak tersedia';
+                  const penulis = peminjaman.penulis || 'Penulis tidak tersedia';
+                  const tanggalTenggat = peminjaman.tanggalTenggat || '';
+                  const tanggalKembali = peminjaman.tanggalKembali || '';
                   const status = peminjaman.statusBukuPinjaman || peminjaman.status || 'DIPINJAM';
 
                   return (
                     <div
                       key={peminjaman.id}
                       className={`border rounded-lg p-4 ${
-                        isLate(tanggalKembali)
+                        isLate(tanggalTenggat)
                           ? 'border-red-300 bg-red-50'
                           : 'border-gray-200'
                       }`}
@@ -257,7 +232,7 @@ export default function UserPeminjamanPage() {
                             {penulis}
                           </p>
                         </div>
-                        {isLate(tanggalKembali) && (
+                        {isLate(tanggalTenggat) && (
                           <div className="flex items-center gap-1">
                             <Badge variant="danger">
                               <AlertCircle size={14} />
@@ -275,9 +250,11 @@ export default function UserPeminjamanPage() {
                           </p>
                         </div>
                         <div>
-                          <span className="text-gray-600">Tenggat:</span>
+                          <span className="text-gray-600">Tgl Kembali:</span>
                           <p className="font-medium text-gray-900">
-                            {format(new Date(tanggalKembali), 'dd/MM/yyyy')}
+                            {tanggalKembali
+                              ? format(new Date(tanggalKembali), 'dd/MM/yyyy')
+                              : '-'}
                           </p>
                         </div>
                         <div>
@@ -326,23 +303,10 @@ export default function UserPeminjamanPage() {
             >
               <div className="space-y-4">
                 {completedPeminjaman.map((peminjaman) => {
-                  const judulBuku = peminjaman.judulBuku && peminjaman.judulBuku.trim() !== ''
-                    ? peminjaman.judulBuku
-                    : (peminjaman.buku?.judulBuku && peminjaman.buku.judulBuku.trim() !== ''
-                      ? peminjaman.buku.judulBuku
-                      : (peminjaman.buku?.judul && peminjaman.buku.judul.trim() !== ''
-                        ? peminjaman.buku.judul
-                        : 'Judul tidak tersedia'));
-                  const penulis = peminjaman.penulis && peminjaman.penulis.trim() !== ''
-                    ? peminjaman.penulis
-                    : (peminjaman.buku?.penulis && peminjaman.buku.penulis.trim() !== ''
-                      ? peminjaman.buku.penulis
-                      : (peminjaman.buku?.pengarang && peminjaman.buku.pengarang.trim() !== ''
-                        ? peminjaman.buku.pengarang
-                        : 'Penulis tidak tersedia'));
-                  const tanggalKembali = peminjaman.tanggalKembali || peminjaman.tanggalHarusKembali || '';
+                  const judulBuku = peminjaman.judulBuku || 'Judul tidak tersedia';
+                  const penulis = peminjaman.penulis || 'Penulis tidak tersedia';
+                  const tanggalTenggat = peminjaman.tanggalTenggat || '';
                   const tanggalDikembalikan = peminjaman.tanggalKembali || '-';
-                  const tanggalHarusKembali = peminjaman.tanggalHarusKembali || tanggalKembali;
                   const status = peminjaman.statusBukuPinjaman || peminjaman.status || 'DIPINJAM';
 
                   return (
@@ -382,7 +346,9 @@ export default function UserPeminjamanPage() {
                         <div>
                           <span className="text-gray-600">Tenggat:</span>
                           <p className="font-medium text-gray-900">
-                            {format(new Date(tanggalHarusKembali), 'dd/MM/yyyy')}
+                            {tanggalTenggat
+                              ? format(new Date(tanggalTenggat), 'dd/MM/yyyy')
+                              : '-'}
                           </p>
                         </div>
                         <div>
@@ -435,8 +401,8 @@ export default function UserPeminjamanPage() {
         title="Ajukan Pengembalian Buku"
       >
         {selectedPeminjaman && (() => {
-          const judulBuku = selectedPeminjaman.judulBuku || selectedPeminjaman.buku?.judulBuku || selectedPeminjaman.buku?.judul || 'Judul tidak tersedia';
-          const penulis = selectedPeminjaman.penulis || selectedPeminjaman.buku?.penulis || selectedPeminjaman.buku?.pengarang || 'Penulis tidak tersedia';
+          const judulBuku = selectedPeminjaman.judulBuku || 'Judul tidak tersedia';
+          const penulis = selectedPeminjaman.penulis || 'Penulis tidak tersedia';
 
           return (
             <div className="space-y-4">
