@@ -151,18 +151,6 @@ export default function AdminPeminjamanPage() {
     }
   };
 
-  const handleReturnBook = async (peminjaman: PeminjamanBuku) => {
-    setSelectedPeminjaman(peminjaman);
-    setFormData({
-      status: 'SUDAH_DIKEMBALIKAN',
-      statusBukuPinjaman: 'SUDAH_DIKEMBALIKAN',
-      tanggalKembali: new Date().toISOString().split('T')[0],
-      denda: undefined,
-      catatan: '',
-    });
-    setIsModalOpen(true);
-  };
-
   const handleViewDetail = (peminjaman: PeminjamanBuku) => {
     setSelectedPeminjaman(peminjaman);
     // Open modal in view mode (read-only)
@@ -436,13 +424,16 @@ export default function AdminPeminjamanPage() {
                     Tanggal Pinjam
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Tenggat
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Tanggal Kembali
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Tenggat Pengembalian
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Total Keterlambatan
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Denda
@@ -460,6 +451,8 @@ export default function AdminPeminjamanPage() {
                     const mahasiswaNim = peminjaman.nim || '-';
                     const bukuJudul = peminjaman.judulBuku || '-';
                     const tanggalKembali = peminjaman.tanggalKembali || '';
+                    const tanggalTenggat = peminjaman.tanggalTenggat || '';
+                    const totalKeterlambatan = peminjaman.totalKeterlambatan || 0;
                     const status = peminjaman.statusBukuPinjaman || 'DIPINJAM';
 
                     // Calculate row number based on sort order and current data count
@@ -499,16 +492,6 @@ export default function AdminPeminjamanPage() {
                                 onClick: () => handleEdit(peminjaman),
                                 icon: <Pencil size={16} />,
                               },
-                              ...(status === 'DIPINJAM'
-                                ? [
-                                    {
-                                      label: 'Kembalikan',
-                                      onClick: () =>
-                                        handleReturnBook(peminjaman),
-                                      icon: <CheckCircleIcon size={16} />,
-                                    },
-                                  ]
-                                : []),
                               {
                                 label: 'Hapus Data',
                                 onClick: () => handleDelete(peminjaman),
@@ -547,18 +530,23 @@ export default function AdminPeminjamanPage() {
                               )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {peminjaman.tanggalKembali
-                            ? format(
-                                new Date(peminjaman.tanggalKembali),
-                                'dd/MM/yyyy'
-                              )
-                            : '-'}
-                        </td>
                         <td className="px-4 py-3 text-sm">
                           <Badge variant={getStatusVariant(status)}>
                             {status}
                           </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {tanggalTenggat
+                            ? format(
+                                new Date(tanggalTenggat),
+                                'dd/MM/yyyy'
+                              )
+                            : '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {totalKeterlambatan > 0
+                            ? `${totalKeterlambatan} Hari`
+                            : '-'}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900">
                           {peminjaman.denda
@@ -593,7 +581,7 @@ export default function AdminPeminjamanPage() {
                 ) : (
                   <tr>
                     <td
-                      colSpan={10}
+                      colSpan={11}
                       className="px-4 py-8 text-center text-gray-500"
                     >
                       No peminjaman found
@@ -674,7 +662,7 @@ export default function AdminPeminjamanPage() {
               setFormData({ ...formData, status: e.target.value as any })
             }
             options={[
-              { value: 'DIPINJAM', label: 'DIPINJAM' },
+              { value: 'DENDA', label: 'DENDA' },
               { value: 'SUDAH_DIKEMBALIKAN', label: 'SUDAH_DIKEMBALIKAN' },
             ]}
             required
