@@ -18,6 +18,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { config } from '@/lib/config';
 
 interface UpdateProfileRequest {
   id: string;
@@ -33,47 +34,13 @@ interface ChangePasswordRequest {
 }
 
 export default function AdminProfilePage() {
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
-
-  // Helper function untuk build full URL foto
-  const getFullPhotoUrl = (fotoPath: string | undefined | null) => {
-    // Return empty string jika tidak ada path atau bukan string
-    if (!fotoPath || typeof fotoPath !== 'string' || fotoPath === '') {
-      return '';
-    }
-
-    // Jika sudah full URL (mulai dengan http), return as is
-    if (fotoPath.startsWith('http://') || fotoPath.startsWith('https://')) {
-      return fotoPath;
-    }
-
-    // Build base URL
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
-    const baseUrl = apiUrl.replace('/api', '');
-
-    // Jika path sudah mengandung /uploads/, gunakan langsung dengan baseUrl
-    if (fotoPath.includes('/uploads/')) {
-      const fullUrl = `${baseUrl}${fotoPath}`;
-      return fullUrl;
-    }
-
-    // Jika path sudah mengandung /admin/, tambahkan /uploads/ di depannya
-    if (fotoPath.includes('/admin/')) {
-      const fullUrl = `${baseUrl}/uploads${fotoPath}`;
-      return fullUrl;
-    }
-
-    // Jika relative path murni (hanya filename), gabungkan dengan base URL
-    const fullUrl = `${baseUrl}/uploads/admin/${fotoPath}`;
-    return fullUrl;
-  };
 
   // Helper untuk cek apakah foto valid
   const isPhotoValid = (fotoPath: string | undefined | null) => {
@@ -174,18 +141,24 @@ export default function AdminProfilePage() {
         showConfirmButton: false,
       });
 
-      // Update profileData dengan URL foto baru
-      setProfileData({
-        ...profileData,
-        fotoProfile: photoUrl,
-      });
-
       // Refresh profile data dari backend untuk mendapatkan data terbaru
       const updatedProfile = await api.getAdminProfile();
+
       setProfileData({
         id: updatedProfile.id || '',
         nama: updatedProfile.nama || updatedProfile.username || '',
         email: updatedProfile.email || '',
+        fotoProfile:
+          updatedProfile.fotoUrl ||
+          updatedProfile.fotoProfile ||
+          updatedProfile.foto ||
+          photoUrl,
+      });
+
+      // Update user di AuthContext dengan data lengkap dari backend
+      updateUser({
+        nama: updatedProfile.nama || updatedProfile.username,
+        email: updatedProfile.email,
         fotoProfile:
           updatedProfile.fotoUrl ||
           updatedProfile.fotoProfile ||
@@ -253,6 +226,8 @@ export default function AdminProfilePage() {
       // Refresh profile data dari backend
       try {
         const updatedProfile = await api.getAdminProfile();
+
+        // Update profileData state
         setProfileData({
           id: updatedProfile.id || '',
           nama: updatedProfile.nama || updatedProfile.username || '',
@@ -263,8 +238,24 @@ export default function AdminProfilePage() {
             updatedProfile.foto ||
             '',
         });
+
+        // Update user di AuthContext dengan data lengkap dari backend
+        updateUser({
+          nama: updatedProfile.nama || updatedProfile.username,
+          email: updatedProfile.email,
+          fotoProfile:
+            updatedProfile.fotoUrl ||
+            updatedProfile.fotoProfile ||
+            updatedProfile.foto,
+        });
       } catch (error) {
-        // Fallback: reload page
+        // Fallback: gunakan data dari form
+        updateUser({
+          nama: profileData.nama,
+          email: profileData.email,
+        });
+
+        // Reload page sebagai fallback terakhir
         setTimeout(() => {
           window.location.reload();
         }, 2000);
@@ -369,7 +360,7 @@ export default function AdminProfilePage() {
                   {isPhotoValid(profileData?.fotoProfile) ? (
                     <>
                       <img
-                        src={getFullPhotoUrl(profileData.fotoProfile!)}
+                        src={config.buildFileUrl(profileData.fotoProfile!)}
                         alt="Profile"
                         className="w-24 h-24 rounded-full object-cover border-4 border-blue-500"
                         onError={(e) => {

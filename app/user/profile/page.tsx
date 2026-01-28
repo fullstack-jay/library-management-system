@@ -9,6 +9,7 @@ import { Button } from '@/components/Button';
 import { Badge } from '@/components/Badge';
 import { User, Mail, Phone, MapPin, Calendar, Camera } from 'lucide-react';
 import { api } from '@/lib/services';
+import { config } from '@/lib/config';
 
 interface UpdateProfileRequest {
   id: string;
@@ -25,7 +26,7 @@ interface UpdateProfileRequest {
 }
 
 export default function UserProfilePage() {
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
@@ -70,31 +71,6 @@ export default function UserProfilePage() {
     tanggalBergabung: '',
     password: '',
   });
-
-  // Helper function untuk build full URL foto
-  const getFullPhotoUrl = (fotoPath: string | undefined | null) => {
-    if (!fotoPath || typeof fotoPath !== 'string' || fotoPath === '') {
-      return '';
-    }
-
-    if (fotoPath.startsWith('http://') || fotoPath.startsWith('https://')) {
-      return fotoPath;
-    }
-
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
-    const baseUrl = apiUrl.replace('/api', '');
-
-    if (fotoPath.includes('/uploads/')) {
-      return `${baseUrl}${fotoPath}`;
-    }
-
-    if (fotoPath.includes('/user/')) {
-      return `${baseUrl}/uploads${fotoPath}`;
-    }
-
-    return `${baseUrl}/uploads/user/${fotoPath}`;
-  };
 
   // Fetch profile data dari backend
   useEffect(() => {
@@ -224,12 +200,6 @@ export default function UserProfilePage() {
         showConfirmButton: false,
       });
 
-      // Update profileData dengan URL foto baru
-      setProfileData({
-        ...profileData,
-        fotoProfile: photoUrl,
-      });
-
       // Refresh profile data dari backend
       const updatedProfile = await api.getUserProfile();
       const userData = updatedProfile.data || updatedProfile;
@@ -240,6 +210,13 @@ export default function UserProfilePage() {
         ...prev,
         fotoProfile: finalFotoUrl,
       }));
+
+      // Update user di AuthContext dengan data lengkap dari backend
+      updateUser({
+        nama: userData.nama,
+        email: userData.email,
+        fotoProfile: finalFotoUrl,
+      });
     } catch (error: any) {
       const errorMsg =
         error.response?.data?.message ||
@@ -340,8 +317,26 @@ export default function UserProfilePage() {
           alamat: userData.alamat || '',
           password: userData.password || formData.password || '',
         });
+
+        // Update user di AuthContext dengan data lengkap dari backend
+        updateUser({
+          nama: userData.nama,
+          email: userData.email,
+          notelepon: userData.notelepon || userData.noHp,
+          jurusan: userData.jurusan,
+          alamat: userData.alamat,
+          fotoProfile:
+            userData.fotoUrl || userData.fotoProfile || userData.foto,
+        });
       } catch (error) {
-        // Error refreshing profile
+        // Fallback: gunakan data dari form
+        updateUser({
+          nama: formData.nama,
+          email: formData.email,
+          notelepon: formData.notelepon,
+          jurusan: formData.jurusan,
+          alamat: formData.alamat,
+        });
       }
     } catch (error: any) {
       const errorMsg =
@@ -406,7 +401,7 @@ export default function UserProfilePage() {
             <div className="relative inline-block">
               {profileData.fotoProfile ? (
                 <img
-                  src={getFullPhotoUrl(profileData.fotoProfile)}
+                  src={config.buildFileUrl(profileData.fotoProfile)}
                   alt="Profile"
                   className="w-24 h-24 rounded-full object-cover border-4 border-blue-500 mx-auto mb-4"
                   onError={(e) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/Button';
@@ -15,7 +15,7 @@ import {
   BookMarked,
 } from 'lucide-react';
 import Link from 'next/link';
-import { api } from '@/lib/services';
+import { config } from '@/lib/config';
 
 export default function UserLayout({
   children,
@@ -24,51 +24,8 @@ export default function UserLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout, token } = useAuth();
+  const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [profilePhoto, setProfilePhoto] = useState<string>('');
-
-  // Helper function untuk build full URL foto
-  const getFullPhotoUrl = (fotoPath: string | undefined | null) => {
-    if (!fotoPath || typeof fotoPath !== 'string' || fotoPath === '') {
-      return '';
-    }
-
-    if (fotoPath.startsWith('http://') || fotoPath.startsWith('https://')) {
-      return fotoPath;
-    }
-
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
-    const baseUrl = apiUrl.replace('/api', '');
-
-    if (fotoPath.includes('/uploads/')) {
-      return `${baseUrl}${fotoPath}`;
-    }
-
-    if (fotoPath.includes('/user/')) {
-      return `${baseUrl}/uploads${fotoPath}`;
-    }
-
-    return `${baseUrl}/uploads/user/${fotoPath}`;
-  };
-
-  // Fetch profile photo
-  useEffect(() => {
-    const fetchProfilePhoto = async () => {
-      if (!token) return;
-
-      try {
-        const profileData = await api.getUserProfile();
-        const userData = profileData.data || profileData;
-        const fotoUrl = userData.fotoUrl || userData.fotoProfile || userData.foto || '';
-        setProfilePhoto(fotoUrl);
-      } catch (error) {
-        // Error fetching profile photo
-      }
-    };
-
-    fetchProfilePhoto();
-  }, [token]);
 
   const handleLogout = () => {
     logout();
@@ -106,25 +63,32 @@ export default function UserLayout({
               <div className="flex items-center space-x-3">
                 {/* Profile Photo */}
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-500">
-                  {profilePhoto ? (
+                  {user?.fotoProfile ? (
                     <img
-                      src={getFullPhotoUrl(profilePhoto)}
+                      src={config.buildFileUrl(user.fotoProfile)}
                       alt="Profile"
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                         (e.target as HTMLImageElement).nextElementSibling &&
-                          ((e.target as HTMLImageElement).nextElementSibling as HTMLElement).style.removeProperty('display');
+                          (
+                            (e.target as HTMLImageElement)
+                              .nextElementSibling as HTMLElement
+                          ).style.removeProperty('display');
                       }}
                     />
                   ) : null}
                   <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    {user?.nama?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase()}
+                    {user?.nama?.charAt(0).toUpperCase() ||
+                      user?.username?.charAt(0).toUpperCase()}
                   </div>
                 </div>
 
                 <div className="hidden md:block text-sm text-gray-700">
-                  Hello, <span className="font-semibold">{user?.nama || user?.username}</span>
+                  Hello,{' '}
+                  <span className="font-semibold">
+                    {user?.nama || user?.username}
+                  </span>
                 </div>
               </div>
 

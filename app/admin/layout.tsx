@@ -18,7 +18,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import Link from 'next/link';
-import { api } from '@/lib/services';
+import { config } from '@/lib/config';
 
 export default function AdminLayout({
   children,
@@ -31,48 +31,6 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
-  const [profilePhoto, setProfilePhoto] = useState<string>('');
-
-  // Helper function untuk build full URL foto
-  const getFullPhotoUrl = (fotoPath: string | undefined | null) => {
-    if (!fotoPath || typeof fotoPath !== 'string' || fotoPath === '') {
-      return '';
-    }
-
-    if (fotoPath.startsWith('http://') || fotoPath.startsWith('https://')) {
-      return fotoPath;
-    }
-
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
-    const baseUrl = apiUrl.replace('/api', '');
-
-    if (fotoPath.includes('/uploads/')) {
-      return `${baseUrl}${fotoPath}`;
-    }
-
-    if (fotoPath.includes('/admin/')) {
-      return `${baseUrl}/uploads${fotoPath}`;
-    }
-
-    return `${baseUrl}/uploads/admin/${fotoPath}`;
-  };
-
-  // Fetch profile photo
-  useEffect(() => {
-    const fetchProfilePhoto = async () => {
-      if (!token) return;
-
-      try {
-        const profileData = await api.getAdminProfile();
-        const fotoUrl = profileData.fotoUrl || profileData.fotoProfile || profileData.foto || '';
-        setProfilePhoto(fotoUrl);
-      } catch (error) {
-        // Error fetching profile photo
-      }
-    };
-
-    fetchProfilePhoto();
-  }, [token]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -133,20 +91,24 @@ export default function AdminLayout({
                   className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-blue-500">
-                    {profilePhoto ? (
+                    {user?.fotoProfile ? (
                       <img
-                        src={getFullPhotoUrl(profilePhoto)}
+                        src={config.buildFileUrl(user.fotoProfile)}
                         alt="Profile"
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
                           (e.target as HTMLImageElement).nextElementSibling &&
-                            ((e.target as HTMLImageElement).nextElementSibling as HTMLElement).style.removeProperty('display');
+                            (
+                              (e.target as HTMLImageElement)
+                                .nextElementSibling as HTMLElement
+                            ).style.removeProperty('display');
                         }}
                       />
                     ) : null}
                     <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      {user?.nama?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase()}
+                      {user?.nama?.charAt(0).toUpperCase() ||
+                        user?.username?.charAt(0).toUpperCase()}
                     </div>
                   </div>
                   <div className="hidden md:block text-left">
@@ -168,9 +130,11 @@ export default function AdminLayout({
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     <div className="px-4 py-3 border-b border-gray-100">
                       <p className="text-sm font-medium text-gray-900">
-                        {user?.nama || user?.username}
+                        {user?.nama}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">{user?.email}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {user?.email}
+                      </p>
                       <span className="inline-block mt-2 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
                         {user?.role}
                       </span>

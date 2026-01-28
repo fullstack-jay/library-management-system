@@ -130,7 +130,7 @@ library-management-system/
 
 - Node.js 20+
 - npm atau yarn
-- Backend Java API (running on port 8080)
+- Backend Java API (running on port 1010)
 
 ### Installation
 
@@ -156,7 +156,7 @@ cp .env.example .env.local
 Edit `.env.local` dan sesuaikan dengan URL backend:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8080/api
+NEXT_PUBLIC_API_URL=http://localhost:1010/api
 ```
 
 4. Run development server

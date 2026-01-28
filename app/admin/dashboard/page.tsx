@@ -492,7 +492,7 @@ export default function AdminDashboardPage() {
                 recentPeminjaman.map((peminjaman, index) => {
                   // Extract data from backend response
                   const no = peminjaman.no ?? index + 1;
-                  const mahasiswaNama = peminjaman.nama || '-';
+                  const mahasiswaNama = peminjaman.namaMahasiswa ?? '-';
                   const mahasiswaNim = peminjaman.nim || '-';
                   const bukuJudul = peminjaman.judulBuku || '-';
                   const status = peminjaman.statusBukuPinjaman || 'DIPINJAM';
